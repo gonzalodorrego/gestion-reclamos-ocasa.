@@ -37,10 +37,19 @@
             color: var(--ocasa-text-1);
         }
 
-        .bg-ocasa-calypso { background-color: var(--ocasa-calypso); }
-        .text-ocasa-text-1 { color: var(--ocasa-text-1); }
-        .text-ocasa-text-2 { color: var(--ocasa-text-2); }
-        .text-ocasa-text-3 { color: var(--ocasa-text-3); }
+        /* ── FIX: clases custom que Tailwind no reconoce sin config ── */
+        .bg-ocasa-calypso     { background-color: var(--ocasa-calypso); }
+        .bg-ocasa-surface     { background-color: var(--ocasa-surface); }
+        .bg-ocasa-surface-alt { background-color: var(--ocasa-surface-alt); }
+        .bg-ocasa-navy        { background-color: var(--ocasa-navy); }
+        .bg-ocasa-danger      { background-color: var(--ocasa-danger); }
+        .border-ocasa-border  { border-color: var(--ocasa-border); }
+        .text-ocasa-calypso   { color: var(--ocasa-calypso); }
+        .text-ocasa-warning   { color: var(--ocasa-warning); }
+        .text-ocasa-danger    { color: var(--ocasa-danger); }
+        .text-ocasa-text-1    { color: var(--ocasa-text-1); }
+        .text-ocasa-text-2    { color: var(--ocasa-text-2); }
+        .text-ocasa-text-3    { color: var(--ocasa-text-3); }
 
         body::before {
             content: '';
@@ -189,12 +198,6 @@
             border-radius: 50%; background: var(--ocasa-calypso);
         }
 
-        .top-reclamo-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 0; border-bottom: 1px solid var(--ocasa-border);
-            font-size: 11px;
-        }
-        .top-reclamo-row:last-child { border-bottom: none; }
         .top-bar {
             height: 4px; border-radius: 4px;
             background: var(--ocasa-calypso-light);
@@ -462,23 +465,17 @@
             else if (view === 'stats') {
                 title.innerText = "Estadísticas";
 
-                // ── Cálculos ──
                 const total      = datosFull.length;
                 const pendientes = datosFull.filter(d => d.estado === 'Pendiente').length;
                 const resueltos  = datosFull.filter(d => d.estado !== 'Pendiente').length;
                 const altaPrio   = datosFull.filter(d => (d.prioridad || '').toLowerCase() === 'alta').length;
 
-                // Por tipo
                 const porTipo = {};
                 datosFull.forEach(d => { porTipo[d.tipo] = (porTipo[d.tipo] || 0) + 1; });
-                const tipoLabels = Object.keys(porTipo);
-                const tipoValues = Object.values(porTipo);
 
-                // Por estado (doughnut)
                 const estadoMap = {};
                 datosFull.forEach(d => { estadoMap[d.estado] = (estadoMap[d.estado] || 0) + 1; });
 
-                // Por mes (últimos 6 meses)
                 const mesesMap = {};
                 const ahora = new Date();
                 for (let i = 5; i >= 0; i--) {
@@ -493,11 +490,9 @@
                     if (k in mesesMap) mesesMap[k]++;
                 });
 
-                // Top tipos para ranking
                 const topTipos = Object.entries(porTipo).sort((a,b) => b[1]-a[1]).slice(0,5);
                 const maxTop   = topTipos[0]?.[1] || 1;
 
-                // Por prioridad
                 const prioMap = { Alta: 0, Media: 0, Baja: 0 };
                 datosFull.forEach(d => {
                     const p = (d.prioridad || 'Baja');
@@ -507,8 +502,6 @@
 
                 frame.innerHTML = `
                 <div class="max-w-6xl mx-auto space-y-6">
-
-                    <!-- KPI Cards -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div class="stat-card total dash-anim" onclick="showView('historico')">
                             <p class="stat-label">Total Registros</p>
@@ -536,7 +529,6 @@
                         </div>
                     </div>
 
-                    <!-- Fila: Evolución mensual + Donut Estado -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="chart-card md:col-span-2 dash-anim">
                             <p class="chart-title"><span></span> Evolución Mensual</p>
@@ -549,11 +541,10 @@
                         </div>
                     </div>
 
-                    <!-- Fila: Ranking tipos + Prioridad -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="chart-card dash-anim">
                             <p class="chart-title"><span style="background:var(--ocasa-navy)"></span> Top Tipos de Reclamo</p>
-                            <div id="topTiposContainer" class="space-y-3 mt-2">
+                            <div class="space-y-3 mt-2">
                                 ${topTipos.length === 0
                                     ? `<p class="text-center text-ocasa-text-3 text-xs italic py-8">Sin datos</p>`
                                     : topTipos.map(([tipo, cnt]) => `
@@ -574,17 +565,14 @@
                             <canvas id="chartPrioridad" height="200"></canvas>
                         </div>
                     </div>
-
                 </div>`;
 
                 lucide.createIcons();
 
-                // ── Chart.js defaults ──
                 Chart.defaults.font.family = "'Montserrat', sans-serif";
                 Chart.defaults.font.weight = '700';
                 Chart.defaults.color      = '#7A959E';
 
-                // Evolución mensual (line)
                 chartInstances.meses = new Chart(document.getElementById('chartMeses'), {
                     type: 'line',
                     data: {
@@ -607,15 +595,11 @@
                         plugins: { legend: { display: false } },
                         scales: {
                             x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' } } },
-                            y: {
-                                beginAtZero: true, grid: { color: '#F0EEEC' },
-                                ticks: { precision: 0, font: { size: 10, weight: '700' } }
-                            }
+                            y: { beginAtZero: true, grid: { color: '#F0EEEC' }, ticks: { precision: 0, font: { size: 10, weight: '700' } } }
                         }
                     }
                 });
 
-                // Estado (doughnut)
                 const estadoLabels = Object.keys(estadoMap);
                 const estadoValues = Object.values(estadoMap);
                 const estadoColors = estadoLabels.map(l =>
@@ -628,13 +612,9 @@
                         labels: estadoLabels,
                         datasets: [{ data: estadoValues, backgroundColor: estadoColors, borderWidth: 2, borderColor: '#fff' }]
                     },
-                    options: {
-                        responsive: true, cutout: '70%',
-                        plugins: { legend: { display: false } }
-                    }
+                    options: { responsive: true, cutout: '70%', plugins: { legend: { display: false } } }
                 });
 
-                // Leyenda manual estado
                 const legendEl = document.getElementById('legendEstado');
                 estadoLabels.forEach((lbl, i) => {
                     legendEl.innerHTML += `
@@ -647,7 +627,6 @@
                         </div>`;
                 });
 
-                // Prioridad (bar)
                 chartInstances.prioridad = new Chart(document.getElementById('chartPrioridad'), {
                     type: 'bar',
                     data: {
