@@ -1,19 +1,83 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>OCASA - Gestión de Reclamos</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --ocasa-cyan: #0097A7; }
-        body { font-family: 'Roboto', sans-serif; background-color: #F8FAFC; color: #1e293b; }
-        .bg-ocasa-cyan { background-color: var(--ocasa-cyan); }
+        :root {
+            /* Color · Primarios */
+            --ocasa-calypso: #0099A8;
+            --ocasa-calypso-dark: #056572;
+            --ocasa-calypso-light: #E0F4F5;
+            --ocasa-navy: #002639;
+
+            /* Color · Semánticos */
+            --ocasa-success: #8FBF4C;
+            --ocasa-warning: #FFAB40;
+            --ocasa-danger: #D64045;
+
+            /* Color · Neutros */
+            --ocasa-bg: #F5F5F5;
+            --ocasa-surface: #FFFFFF;
+            --ocasa-surface-alt: #EEEDEB;
+            --ocasa-border: #D6E2E5;
+            --ocasa-text-1: #1E2D32;
+            --ocasa-text-2: #4A6670;
+            --ocasa-text-3: #7A959E;
+
+            /* Tipografía */
+            --ocasa-font: 'Montserrat', sans-serif;
+
+            /* Radios */
+            --ocasa-radius-sm: 3px;
+            --ocasa-radius-md: 5px;
+            --ocasa-radius-lg: 6px;
+            --ocasa-radius-xl: 8px;
+
+            /* Espaciado */
+            --ocasa-space-xs: 4px;
+            --ocasa-space-sm: 8px;
+            --ocasa-space-md: 16px;
+            --ocasa-space-lg: 24px;
+            --ocasa-space-xl: 32px;
+            --ocasa-space-2xl: 48px;
+            --ocasa-space-3xl: 64px;
+        }
+
+        body {
+            font-family: var(--ocasa-font);
+            background-color: var(--ocasa-bg);
+            color: var(--ocasa-text-1);
+        }
+
+        .bg-ocasa-calypso {
+            background-color: var(--ocasa-calypso);
+        }
+
+        .text-ocasa-text-1 { color: var(--ocasa-text-1); }
+        .text-ocasa-text-2 { color: var(--ocasa-text-2); }
+        .text-ocasa-text-3 { color: var(--ocasa-text-3); }
         
-        /* Animación Campana */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background-color: var(--ocasa-calypso);
+            z-index: 300;
+            pointer-events: none;
+        }
+
+        body {
+            padding-top: 6px;
+        }
+
         @keyframes bell-swing {
             0% { transform: rotate(0); }
             15% { transform: rotate(15deg); }
@@ -23,107 +87,205 @@
             75% { transform: rotate(0); }
             100% { transform: rotate(0); }
         }
-        .animate-bell svg { animation: bell-swing 2s infinite; color: #ef4444 !important; }
 
-        /* Dropdown Notificaciones */
-        #notifPanel { 
-            display: none; 
-            position: absolute; 
-            top: 65px; 
-            right: 0; 
-            width: 320px; 
-            max-height: 480px; 
-            background: white; 
-            border-radius: 24px; 
+        .animate-bell svg {
+            animation: bell-swing 2s infinite;
+            color: var(--ocasa-danger) !important;
+        }
+
+        #notifPanel {
+            display: none;
+            position: absolute;
+            top: 65px;
+            right: 0;
+            width: 320px;
+            max-height: 480px;
+            background: var(--ocasa-surface);
+            border-radius: var(--ocasa-radius-xl);
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
             z-index: 200;
-            border: 1px solid #f1f5f9;
+            border: 1px solid var(--ocasa-border);
         }
-        #notifPanel.show { display: block; animation: slideIn 0.2s ease-out; }
+
+        #notifPanel.show {
+            display: block;
+            animation: slideIn 0.2s ease-out;
+        }
 
         @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        #sidebar { transition: transform 0.3s ease; z-index: 100; }
+        #sidebar {
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+
         @media (max-width: 768px) {
-            #sidebar { transform: translateX(-100%); position: fixed; height: 100vh; }
-            #sidebar.open { transform: translateX(0); }
-            #overlay.show { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; }
+            #sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                height: 100vh;
+            }
+            #sidebar.open {
+                transform: translateX(0);
+            }
+            #overlay.show {
+                display: block;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 90;
+            }
         }
 
-        #menuContent { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
-        #menuContent.open { max-height: 500px; }
-        
-        .menu-link {
-            display: flex; align-items: center; gap: 12px; padding: 14px 20px;
-            border-radius: 16px; font-size: 13px; font-weight: 700; color: #64748b;
-            transition: all 0.2s; text-transform: uppercase;
+        #menuContent {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
         }
-        .menu-link:hover { background-color: #f1f5f9; color: var(--ocasa-cyan); }
+
+        #menuContent.open {
+            max-height: 500px;
+        }
+
+        .menu-link {
+            display: flex;
+            align-items: center;
+            gap: var(--ocasa-space-md);
+            padding: var(--ocasa-space-md) var(--ocasa-space-lg);
+            border-radius: var(--ocasa-radius-lg);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ocasa-text-3);
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .menu-link:hover {
+            background-color: var(--ocasa-surface-alt);
+            color: var(--ocasa-calypso);
+        }
 
         .hero-bg {
-            background: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), 
+            background: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)),
                         url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
-            background-size: cover; background-position: center;
+            background-size: cover;
+            background-position: center;
         }
-        #overlay { display: none; }
+
+        #overlay {
+            display: none;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: var(--ocasa-surface-alt);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--ocasa-border);
+            border-radius: var(--ocasa-radius-xl);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: var(--ocasa-calypso);
+        }
+
+        .status-positivo {
+            background-color: rgba(143, 191, 76, 0.15);
+            color: #5a7d2f;
+            border: 1px solid rgba(143, 191, 76, 0.3);
+        }
+
+        .status-importante {
+            background-color: rgba(0, 153, 168, 0.12);
+            color: var(--ocasa-calypso-dark);
+            border: 1px solid rgba(0, 153, 168, 0.2);
+        }
+
+        .status-atencion {
+            background-color: rgba(255, 171, 64, 0.18);
+            color: #d97a26;
+            border: 1px solid rgba(255, 171, 64, 0.3);
+        }
+
+        .status-critico {
+            background-color: rgba(214, 64, 69, 0.12);
+            color: var(--ocasa-danger);
+            border: 1px solid rgba(214, 64, 69, 0.2);
+        }
+
+        .row-marked {
+            background-color: rgba(214, 64, 69, 0.06) !important;
+            border-left: 3px solid var(--ocasa-danger) !important;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
     <div id="overlay" onclick="toggleSidebar()"></div>
 
-    <aside id="sidebar" class="w-72 bg-white border-r border-slate-200 flex flex-col shrink-0">
-        <div class="p-8 border-b border-slate-100 flex flex-col items-center">
+    <aside id="sidebar" class="w-72 bg-ocasa-surface border-r border-ocasa-border flex flex-col shrink-0">
+        <div class="p-8 border-b border-ocasa-border flex flex-col items-center">
             <img src="logo_ocasa.png" alt="OCASA" class="max-w-[140px] mb-2 cursor-pointer" onclick="showView('home')">
-            <span class="text-[10px] text-slate-400 font-black tracking-widest uppercase italic">Logística Global</span>
+            <span class="text-[10px] text-ocasa-text-3 font-black tracking-widest uppercase italic">Logística Global</span>
         </div>
-        
+
         <nav class="flex-1 p-4 space-y-2">
-            <button onclick="toggleMenu()" class="w-full flex items-center justify-between px-5 py-4 bg-ocasa-cyan text-white rounded-2xl font-bold shadow-lg shadow-cyan-500/20 active:scale-95 transition-all">
+            <button onclick="toggleMenu()" class="w-full flex items-center justify-between px-6 py-4 bg-ocasa-calypso text-white rounded-lg font-bold shadow-lg shadow-cyan-500/20 active:scale-95 transition-all" style="border-radius: var(--ocasa-radius-xl);">
                 <div class="flex items-center gap-3">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                     <span class="text-sm tracking-tight uppercase">Menú Principal</span>
                 </div>
                 <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" id="menuChevron"></i>
             </button>
-            
-            <div id="menuContent" class="mt-2 space-y-1 bg-slate-50 rounded-3xl p-2 border border-slate-100">
-                <button onclick="showView('carga'); toggleSidebar();" class="menu-link w-full"><i data-lucide="file-plus" class="w-4 h-4"></i> Cargar Reclamo</button>
-                <button onclick="showView('historico'); toggleSidebar();" class="menu-link w-full"><i data-lucide="history" class="w-4 h-4"></i> Histórico</button>
-                <button onclick="showView('stats'); toggleSidebar();" class="menu-link w-full"><i data-lucide="pie-chart" class="w-4 h-4"></i> Estadísticas</button>
+
+            <div id="menuContent" class="mt-2 space-y-1 bg-ocasa-surface-alt rounded-lg p-2 border border-ocasa-border" style="border-radius: var(--ocasa-radius-lg);">
+                <button onclick="showView('carga'); toggleSidebar();" class="menu-link w-full" style="border-radius: var(--ocasa-radius-md);"><i data-lucide="file-plus" class="w-4 h-4"></i> Cargar Reclamo</button>
+                <button onclick="showView('historico'); toggleSidebar();" class="menu-link w-full" style="border-radius: var(--ocasa-radius-md);"><i data-lucide="history" class="w-4 h-4"></i> Histórico</button>
+                <button onclick="showView('stats'); toggleSidebar();" class="menu-link w-full" style="border-radius: var(--ocasa-radius-md);"><i data-lucide="pie-chart" class="w-4 h-4"></i> Estadísticas</button>
             </div>
         </nav>
 
-        <div class="p-6 border-t border-slate-100 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-ocasa-cyan border border-slate-200 text-xs">GD</div>
+        <div class="p-6 border-t border-ocasa-border flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-ocasa-surface-alt flex items-center justify-center font-bold text-ocasa-calypso border border-ocasa-border text-xs" style="border-radius: var(--ocasa-radius-xl);">GD</div>
             <div class="flex flex-col">
-                <span class="text-xs font-bold leading-tight">Gonzalo Dorrego</span>
-                <span class="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Admin Sistema</span>
+                <span class="text-xs font-bold leading-tight text-ocasa-text-1">Gonzalo Dorrego</span>
+                <span class="text-[9px] text-ocasa-text-3 uppercase font-bold tracking-tighter">Admin Sistema</span>
             </div>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0 bg-white relative">
-        <header class="h-16 md:h-20 bg-white border-b border-slate-100 px-6 md:px-10 flex items-center justify-between shadow-sm">
+    <main class="flex-1 flex flex-col min-w-0 bg-ocasa-surface relative">
+        <header class="h-16 md:h-20 bg-ocasa-surface border-b border-ocasa-border px-6 md:px-10 flex items-center justify-between shadow-sm">
             <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()" class="md:hidden p-2 text-slate-600"><i data-lucide="menu"></i></button>
-                <span class="hidden md:block w-1.5 h-6 bg-ocasa-cyan rounded-full"></span>
-                <h2 id="viewTitle" class="text-sm md:text-lg font-black text-slate-800 uppercase italic tracking-tighter">Panel de Gestión</h2>
+                <button onclick="toggleSidebar()" class="md:hidden p-2 text-ocasa-text-2"><i data-lucide="menu"></i></button>
+                <span class="hidden md:block w-1.5 h-6 bg-ocasa-calypso rounded-full"></span>
+                <h2 id="viewTitle" class="text-sm md:text-lg font-black text-ocasa-text-1 uppercase italic tracking-tighter">Panel de Gestión</h2>
             </div>
-            
+
             <div class="relative">
-                <button onclick="toggleNotificaciones()" id="btnBell" class="p-2 rounded-full hover:bg-slate-100 transition-all relative">
-                    <div id="bellWrapper"><i data-lucide="bell" class="w-6 h-6 text-slate-400"></i></div>
-                    <span id="badgeNotif" class="hidden absolute top-0 right-0 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">0</span>
+                <button onclick="toggleNotificaciones()" id="btnBell" class="p-2 rounded-full hover:bg-ocasa-surface-alt transition-all relative" style="border-radius: var(--ocasa-radius-lg);">
+                    <div id="bellWrapper"><i data-lucide="bell" class="w-6 h-6 text-ocasa-text-3"></i></div>
+                    <span id="badgeNotif" class="hidden absolute top-0 right-0 bg-ocasa-danger text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-ocasa-surface" style="border-radius: var(--ocasa-radius-xl);">0</span>
                 </button>
 
                 <div id="notifPanel">
-                    <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center rounded-t-[24px]">
-                        <span class="text-[10px] font-black uppercase text-slate-400 italic">Alertas SLA (+24hs)</span>
-                        <span id="notifCount" class="bg-red-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold">0</span>
+                    <div class="p-4 border-b border-ocasa-border bg-ocasa-surface-alt flex justify-between items-center" style="border-radius: var(--ocasa-radius-xl) var(--ocasa-radius-xl) 0 0;">
+                        <span class="text-[10px] font-black uppercase text-ocasa-text-3 italic">Alertas SLA (+24hs)</span>
+                        <span id="notifCount" class="bg-ocasa-danger text-white text-[9px] px-2 py-0.5 rounded-full font-bold" style="border-radius: var(--ocasa-radius-sm);">0</span>
                     </div>
                     <div id="notifList" class="overflow-y-auto max-h-[350px] p-2 space-y-2"></div>
                 </div>
@@ -134,7 +296,7 @@
     </main>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxs6-28lVAXxzHRSCRVMijfUlJ7IWtImxlhatT1GNA4U3OLmx2A-E5eZXekfX1hrvxARQ/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby6ZbP0Zs6AkB4CxinKNsGW6wC11VB0PYGbLOhe7cY_iFVDsfWYfd1c3PFPN3ghfKw0pw/exec';
         let datosFull = [];
         let reclamosAtrasados = [];
 
@@ -153,7 +315,6 @@
             document.getElementById('notifPanel').classList.toggle('show');
         }
 
-        // Click fuera para cerrar notificaciones
         window.addEventListener('click', (e) => {
             if (!document.getElementById('btnBell').contains(e.target) && !document.getElementById('notifPanel').contains(e.target)) {
                 document.getElementById('notifPanel').classList.remove('show');
@@ -172,25 +333,25 @@
             const wrapper = document.getElementById('bellWrapper');
             const list = document.getElementById('notifList');
             const count = document.getElementById('notifCount');
-            
+
             if (reclamosAtrasados.length > 0) {
                 badge.innerText = reclamosAtrasados.length;
                 badge.classList.remove('hidden');
                 wrapper.classList.add('animate-bell');
                 count.innerText = reclamosAtrasados.length;
                 list.innerHTML = reclamosAtrasados.map(r => `
-                    <div class="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm border-l-4 border-l-red-500">
-                        <p class="text-[11px] font-black text-slate-800 uppercase italic">${r.tipo}</p>
-                        <p class="text-[10px] text-slate-400 font-bold mt-1">Guía: ${r.remito}</p>
+                    <div class="p-4 bg-ocasa-surface border border-ocasa-border rounded-lg shadow-sm" style="border-left: 4px solid var(--ocasa-danger); border-radius: var(--ocasa-radius-lg);">
+                        <p class="text-[11px] font-black text-ocasa-text-1 uppercase italic">${r.tipo}</p>
+                        <p class="text-[10px] text-ocasa-text-3 font-bold mt-1">Guía: ${r.remito}</p>
                         <div class="flex justify-between items-center mt-3">
-                            <span class="text-[9px] text-red-500 font-bold uppercase italic">Vencido</span>
-                            <button onclick="verReclamo('${r.remito}')" class="bg-slate-900 text-white text-[9px] px-3 py-1.5 rounded-lg font-black uppercase">Ver</button>
+                            <span class="text-[9px] text-ocasa-danger font-bold uppercase italic">Vencido</span>
+                            <button onclick="verReclamo('${r.remito}')" class="bg-ocasa-navy text-white text-[9px] px-3 py-1.5 rounded font-black uppercase" style="border-radius: var(--ocasa-radius-md);">Ver</button>
                         </div>
                     </div>`).join('');
             } else {
                 badge.classList.add('hidden');
                 wrapper.classList.remove('animate-bell');
-                list.innerHTML = `<p class="p-8 text-center text-slate-400 text-xs font-bold italic">Todo al día</p>`;
+                list.innerHTML = `<p class="p-8 text-center text-ocasa-text-3 text-xs font-bold italic">Todo al día</p>`;
             }
         }
 
@@ -203,73 +364,95 @@
             const frame = document.getElementById('contentFrame');
             const title = document.getElementById('viewTitle');
             frame.className = "flex-1 overflow-y-auto p-4 md:p-10";
-            
+
             if (view === 'home') {
                 frame.classList.add('hero-bg', 'flex', 'items-center', 'justify-center');
                 title.innerText = "Inicio";
-                frame.innerHTML = `<div class="text-center bg-white/80 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl border border-white w-full max-w-lg">
-                    <i data-lucide="package" class="w-16 h-16 text-ocasa-cyan mx-auto mb-4"></i>
-                    <h1 class="text-3xl font-black text-slate-800 uppercase italic tracking-tighter">OCASA Logística</h1>
+                frame.innerHTML = `<div class="text-center bg-ocasa-surface/80 backdrop-blur-md p-10 rounded-lg shadow-2xl border border-ocasa-surface w-full max-w-lg" style="border-radius: var(--ocasa-radius-xl);">
+                    <i data-lucide="package" class="w-16 h-16 text-ocasa-calypso mx-auto mb-4"></i>
+                    <h1 class="text-3xl font-black text-ocasa-text-1 uppercase italic tracking-tighter">OCASA Logística</h1>
                 </div>`;
-            } 
-            
+            }
+
             else if (view === 'carga') {
                 title.innerText = "Nueva Carga";
                 frame.innerHTML = `
-                    <div class="max-w-xl mx-auto bg-white rounded-[2.5rem] shadow-xl p-8 border border-slate-100">
+                    <div class="max-w-xl mx-auto bg-ocasa-surface rounded-lg shadow-xl p-8 border border-ocasa-border" style="border-radius: var(--ocasa-radius-xl);">
                         <form id="formCarga" class="space-y-4">
-                            <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase italic ml-2">Tipo de reclamo</label>
-                                <select id="f-tipo" class="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 font-bold">
+                            <div class="space-y-1"><label class="text-[10px] font-black text-ocasa-text-3 uppercase italic ml-2">Tipo de reclamo</label>
+                                <select id="f-tipo" class="w-full p-4 rounded bg-ocasa-surface-alt border border-ocasa-border font-bold text-ocasa-text-1" style="border-radius: var(--ocasa-radius-md);">
                                     <option>Caja rota</option><option>Producto equivocado</option><option>No recibí producto</option>
                                 </select>
                             </div>
-                            <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase italic ml-2">Remito</label>
-                                <input type="text" id="f-remito" required class="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 font-black outline-none">
+                            <div class="space-y-1"><label class="text-[10px] font-black text-ocasa-text-3 uppercase italic ml-2">Remito</label>
+                                <input type="text" id="f-remito" required class="w-full p-4 rounded bg-ocasa-surface-alt border border-ocasa-border font-black outline-none text-ocasa-text-1" style="border-radius: var(--ocasa-radius-md);">
                             </div>
-                            <button type="submit" class="w-full bg-ocasa-cyan text-white py-5 rounded-2xl font-black uppercase text-sm shadow-xl active:scale-95 transition-all mt-4 tracking-widest">Sincronizar Reclamo</button>
+                            <div class="space-y-1"><label class="text-[10px] font-black text-ocasa-text-3 uppercase italic ml-2">Prioridad</label>
+                                <select id="f-prioridad" class="w-full p-4 rounded bg-ocasa-surface-alt border border-ocasa-border font-bold text-ocasa-text-1" style="border-radius: var(--ocasa-radius-md);">
+                                    <option>Baja</option><option>Media</option><option>Alta</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1"><label class="text-[10px] font-black text-ocasa-text-3 uppercase italic ml-2">Descripción</label>
+                                <textarea id="f-descripcion" required class="w-full p-4 rounded bg-ocasa-surface-alt border border-ocasa-border font-medium outline-none h-24 text-ocasa-text-1" style="border-radius: var(--ocasa-radius-md);"></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-ocasa-calypso text-white py-5 rounded font-black uppercase text-sm shadow-xl active:scale-95 transition-all mt-4 tracking-widest" style="border-radius: var(--ocasa-radius-lg);">Sincronizar Reclamo</button>
                         </form>
                     </div>`;
-                
+
                 document.getElementById('formCarga').addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const btn = e.target.querySelector('button');
                     btn.disabled = true; btn.innerText = "Enviando...";
                     const payload = {
-                        fecha: new Date().toLocaleString(),
+                        fecha: new Date().toISOString(),
                         tipo: document.getElementById('f-tipo').value,
                         remito: document.getElementById('f-remito').value,
+                        prioridad: document.getElementById('f-prioridad').value,
+                        descripcion: document.getElementById('f-descripcion').value,
                         estado: "Pendiente", usuario: "Gonzalo Dorrego"
                     };
                     await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                    alert("¡Cargado!"); 
+                    alert("¡Cargado!");
                     init();
                 });
             }
 
             else if (view === 'historico') {
-                title.innerText = filter ? `Filtrando: ${filter}` : "Historial General";
+                title.innerText = filter ? `Búsqueda: ${filter}` : "Historial General";
                 frame.innerHTML = `
                     <div class="max-w-6xl mx-auto space-y-4">
-                        <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-slate-100">
-                            <input type="text" id="searchTable" oninput="filtrarTabla()" placeholder="Remito..." class="p-3 bg-slate-50 border rounded-xl text-sm w-48 outline-none">
-                            ${filter ? `<button onclick="showView('historico')" class="text-[9px] font-black text-red-500 bg-red-50 px-4 py-2 rounded-lg border border-red-100 uppercase italic">Ver todos</button>` : ''}
+                        <div class="bg-ocasa-surface p-4 rounded-lg flex justify-between items-center shadow-sm border border-ocasa-border" style="border-radius: var(--ocasa-radius-lg);">
+                            <input type="text" id="searchTable" oninput="filtrarTabla()" placeholder="Buscar en todos los campos..." class="p-3 bg-ocasa-surface-alt border border-ocasa-border rounded text-sm w-64 outline-none text-ocasa-text-1" style="border-radius: var(--ocasa-radius-md);" value="${filter || ''}">
+                            ${filter ? `<button onclick="showView('historico')" class="text-[9px] font-black text-ocasa-danger bg-ocasa-danger/10 px-4 py-2 rounded border border-ocasa-danger/20 uppercase italic" style="border-radius: var(--ocasa-radius-md);">Limpiar</button>` : ''}
                         </div>
-                        <div class="bg-white rounded-[2rem] border border-slate-200 overflow-hidden">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase italic">
-                                    <tr><th class="p-5">Remito</th><th class="p-5">Tipo</th><th class="p-5">Estado</th></tr>
-                                </thead>
-                                <tbody id="tablaBody" class="text-sm"></tbody>
-                            </table>
+                        <div class="bg-ocasa-surface rounded-lg border border-ocasa-border overflow-hidden shadow-sm" style="border-radius: var(--ocasa-radius-lg);">
+                            <div class="overflow-x-auto custom-scrollbar">
+                                <table class="w-full text-left min-w-[1000px]">
+                                    <thead class="bg-ocasa-navy text-[10px] font-black text-white uppercase" style="letter-spacing: 0.05em;">
+                                        <tr>
+                                            <th class="p-4">Fecha</th>
+                                            <th class="p-4">Remito</th>
+                                            <th class="p-4">Tipo</th>
+                                            <th class="p-4">Prioridad</th>
+                                            <th class="p-4">Descripción</th>
+                                            <th class="p-4">Resolución</th>
+                                            <th class="p-4 text-right">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaBody" class="text-sm"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>`;
-                
-                // ARREGLO FILTRO ESTADÍSTICA: Si el filtro es "Pendiente", filtramos por la columna estado
+
                 let data = datosFull;
                 if(filter === 'Pendiente') {
                     data = datosFull.filter(d => d.estado === 'Pendiente');
                 } else if(filter) {
-                    data = datosFull.filter(d => d.remito == filter);
+                    const term = filter.toLowerCase();
+                    data = datosFull.filter(d =>
+                        Object.values(d).some(val => val.toString().toLowerCase().includes(term))
+                    );
                 }
                 renderizarTabla(data);
             }
@@ -280,13 +463,13 @@
                 const pendientes = datosFull.filter(d => d.estado === 'Pendiente').length;
                 frame.innerHTML = `
                     <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                            <p class="text-[10px] font-black text-slate-400 uppercase italic">Total Histórico</p>
-                            <p class="text-6xl font-black text-slate-800 tracking-tighter">${total}</p>
+                        <div onclick="showView('historico')" class="bg-ocasa-surface p-8 rounded-lg border border-ocasa-border shadow-sm cursor-pointer hover:bg-ocasa-surface-alt transition-all" style="border-radius: var(--ocasa-radius-lg);">
+                            <p class="text-[10px] font-black text-ocasa-text-3 uppercase italic">Total Histórico</p>
+                            <p class="text-6xl font-black text-ocasa-text-1 tracking-tighter">${total}</p>
                         </div>
-                        <div onclick="showView('historico', 'Pendiente')" class="bg-white p-8 rounded-[2.5rem] border border-orange-100 shadow-sm text-orange-600 cursor-pointer hover:bg-orange-50 transition-all">
-                            <p class="text-[10px] font-black uppercase italic flex justify-between">Pendientes <i data-lucide="arrow-right" class="w-4 h-4"></i></p>
-                            <p class="text-6xl font-black tracking-tighter">${pendientes}</p>
+                        <div onclick="showView('historico', 'Pendiente')" class="bg-ocasa-surface p-8 rounded-lg border-l-4 shadow-sm cursor-pointer hover:bg-ocasa-surface-alt transition-all" style="border-radius: var(--ocasa-radius-lg); border-left-color: var(--ocasa-warning);">
+                            <p class="text-[10px] font-black text-ocasa-warning uppercase italic flex justify-between">Pendientes <i data-lucide="arrow-right" class="w-4 h-4"></i></p>
+                            <p class="text-6xl font-black text-ocasa-text-1 tracking-tighter">${pendientes}</p>
                         </div>
                     </div>`;
             }
@@ -296,19 +479,46 @@
         function renderizarTabla(data) {
             const tbody = document.getElementById('tablaBody');
             if(!tbody) return;
-            tbody.innerHTML = data.map(item => `
-                <tr class="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
-                    <td class="p-5 font-black text-slate-900">${item.remito}</td>
-                    <td class="p-5 text-slate-600 font-bold italic">${item.tipo}</td>
-                    <td class="p-5">
-                        <span class="px-3 py-1.5 ${item.estado === 'Pendiente' ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-cyan-50 text-ocasa-cyan border-cyan-200'} rounded-full text-[10px] font-black uppercase border tracking-tighter">${item.estado}</span>
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-20 text-center text-ocasa-text-3 font-bold italic">No existen registros</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(item => {
+                const f = item.fecha ? item.fecha.split('T')[0].split('-').reverse().join('/') : '-';
+                const prio = (item.prioridad || 'Baja').toUpperCase();
+                const estado = item.estado.toUpperCase();
+
+                let statusClass = 'status-importante';
+                if (estado === 'PENDIENTE') statusClass = 'status-atencion';
+
+                return `
+                <tr class="border-t border-ocasa-border hover:bg-ocasa-surface-alt/50 transition-colors">
+                    <td class="p-4 text-[10px] font-bold text-ocasa-text-3 whitespace-nowrap">${f}</td>
+                    <td class="p-4 font-black text-ocasa-text-1">${item.remito}</td>
+                    <td class="p-4 text-ocasa-text-2 font-bold italic text-sm">${item.tipo}</td>
+                    <td class="p-4">
+                        <span class="font-bold ${prio === 'ALTA' ? 'text-ocasa-danger' : 'text-ocasa-text-3'} text-[10px] uppercase">${prio}</span>
                     </td>
-                </tr>`).join('');
+                    <td class="p-4 text-xs text-ocasa-text-2 max-w-[250px] break-words">${item.descripcion || '-'}</td>
+                    <td class="p-4 text-[11px] italic text-ocasa-text-3 max-w-[250px] break-words">${item.resolucion || '-'}</td>
+                    <td class="p-4 text-right">
+                        <span class="px-3 py-1.5 ${statusClass} rounded font-black uppercase text-[10px]" style="border-radius: var(--ocasa-radius-sm); letter-spacing: 0.05em;">
+                            ${item.estado}
+                        </span>
+                    </td>
+                </tr>`;
+            }).join('');
         }
 
         function filtrarTabla() {
             const term = document.getElementById('searchTable').value.toLowerCase();
-            const filtrados = datosFull.filter(d => d.remito.toLowerCase().includes(term));
+            const filtrados = datosFull.filter(d =>
+                Object.values(d).some(val =>
+                    val.toString().toLowerCase().includes(term)
+                )
+            );
             renderizarTabla(filtrados);
         }
 
@@ -318,8 +528,8 @@
                 datosFull = await res.json();
                 showView('home');
                 lucide.createIcons();
-                setTimeout(procesarAlertas, 800); 
-            } catch (e) { console.error("Error"); }
+                setTimeout(procesarAlertas, 800);
+            } catch (e) { console.error("Error cargando datos"); }
         }
         init();
     </script>
