@@ -34,7 +34,7 @@ button{cursor:pointer;font-family:inherit;border:none;outline:none}
 #btn-sync:disabled{opacity:.5;cursor:default}
 #sync-status{font-size:11px;color:var(--muted);min-width:160px;text-align:right}
 
-#kpis{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--border);background:var(--panel)}
+#kpis{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);background:var(--panel)}
 .kpi{padding:14px 20px;border-right:1px solid var(--border)}
 .kpi:last-child{border-right:none}
 .kpi-val{font-family:'DM Mono',monospace;font-size:28px;font-weight:700;line-height:1}
@@ -149,7 +149,8 @@ button{cursor:pointer;font-family:inherit;border:none;outline:none}
   <div class="kpi"><div class="kpi-val c-red"  id="k-alta">—</div><div class="kpi-lbl">Prioridad Alta</div></div>
   <div class="kpi"><div class="kpi-val c-amber" id="k-media">—</div><div class="kpi-lbl">Con turno/hora</div></div>
   <div class="kpi"><div class="kpi-val c-blue"  id="k-baja">—</div><div class="kpi-lbl">Sin turno</div></div>
-  <div class="kpi"><div class="kpi-val c-green" id="k-lib">—</div><div class="kpi-lbl">Liberados hoy</div></div>
+  <div class="kpi"><div class="kpi-val c-green" id="k-lib">—</div><div class="kpi-lbl">Liberados</div></div>
+  <div class="kpi"><div class="kpi-val" style="color:var(--amber)" id="k-reprog">—</div><div class="kpi-lbl">Reprogramados</div></div>
 </div>
 
 <div id="next-banner"><span style="color:var(--muted);font-size:13px">Cargando...</span></div>
@@ -162,6 +163,9 @@ button{cursor:pointer;font-family:inherit;border:none;outline:none}
   </button>
   <button class="tab" onclick="setTab('historial',this)">
     Historial liberados <span class="tab-badge" id="badge-hist">—</span>
+  </button>
+  <button class="tab" onclick="setTab('reprogramados',this)">
+    Reprogramados <span class="tab-badge" id="badge-reprog">—</span>
   </button>
 </div>
 
@@ -278,7 +282,7 @@ function tickClock() {
 setInterval(tickClock,1000); tickClock()
 
 // ── ESTADO GLOBAL ─────────────────────────────────────────────
-let COLA=[], HISTORIAL=[], filtroActivo='todos', tabActivo='cola'
+let COLA=[], HISTORIAL=[], REPROGRAMADOS=[], filtroActivo='todos', tabActivo='cola'
 
 // ── CARGA ─────────────────────────────────────────────────────
 async function cargarDatos() {
@@ -325,7 +329,7 @@ async function cargarDatos() {
 
     const cel=(row,i)=>i>=0?(row.c[i]?.v??row.c[i]?.f??''):''
 
-    COLA=[]; HISTORIAL=[]
+    COLA=[]; HISTORIAL=[]; REPROGRAMADOS=[]
 
     for (const row of data.table.rows) {
       const cliente  = String(cel(row,idx.cliente)||'').trim()
@@ -350,8 +354,11 @@ async function cargarDatos() {
       }
 
       // "Liberado" (case-insensitive) → historial; todo lo demás → cola activa
+      // Liberado → historial | Reprogramado → reprogramados | todo lo demás → cola activa
       if (/^liberado$/i.test(detalle)) {
         HISTORIAL.push(fila)
+      } else if (/^reprogramado$/i.test(detalle)) {
+        REPROGRAMADOS.push(fila)
       } else {
         COLA.push(fila)
       }
@@ -364,6 +371,7 @@ async function cargarDatos() {
     // Actualizar badges de tabs
     document.getElementById('badge-cola').textContent=COLA.length
     document.getElementById('badge-hist').textContent=HISTORIAL.length
+    document.getElementById('badge-reprog').textContent=REPROGRAMADOS.length
 
     const ts=new Date().toLocaleTimeString('es-AR',{hour12:false})
     document.getElementById('sync-status').textContent=`✓ ${ts}`
@@ -393,6 +401,7 @@ function renderTodo() {
   document.getElementById('k-media').textContent  = COLA.filter(f=>f.parsed.prioridad==='MEDIA').length
   document.getElementById('k-baja').textContent   = COLA.filter(f=>f.parsed.prioridad==='BAJA').length
   document.getElementById('k-lib').textContent    = HISTORIAL.length
+  document.getElementById('k-reprog').textContent = REPROGRAMADOS.length
   renderBanner()
   renderTabla()
 }
@@ -459,14 +468,16 @@ function renderTabla() {
   const filterBar=document.getElementById('filter-bar')
   estado.style.display='none'
 
-  const esHistorial = tabActivo==='historial'
+  const esCola       = tabActivo==='cola'
+  const esHistorial  = tabActivo==='historial'
+  const esReprog     = tabActivo==='reprogramados'
 
-  // En historial ocultamos filtros de prioridad
-  filterBar.style.display = esHistorial ? 'none' : 'flex'
-  tabla.className = esHistorial ? 'historial' : ''
+  // Filtros de prioridad solo en cola activa
+  filterBar.style.display = esCola ? 'flex' : 'none'
+  tabla.className = esCola ? '' : 'historial'
 
-  let fuente = esHistorial ? HISTORIAL : COLA
-  if (!esHistorial && filtroActivo!=='todos')
+  let fuente = esHistorial ? HISTORIAL : esReprog ? REPROGRAMADOS : COLA
+  if (esCola && filtroActivo!=='todos')
     fuente = fuente.filter(f=>f.parsed.prioridad===filtroActivo)
 
   document.getElementById('result-count').textContent=`${fuente.length} colecta${fuente.length!==1?'s':''}`
@@ -476,9 +487,13 @@ function renderTabla() {
 
   // Ajustar header según tab
   const thead = tabla.querySelector('thead tr')
-  if (esHistorial) {
+  if (esCola) {
+    thead.cells[5].textContent='Prioridad'
+    thead.cells[6].textContent='Alerta'
+  } else {
     thead.cells[5].textContent='Estado'
     thead.cells[6].textContent='Turno'
+  }
   } else {
     thead.cells[5].textContent='Prioridad'
     thead.cells[6].textContent='Alerta'
@@ -498,16 +513,19 @@ function renderTabla() {
       turnoHTML=`<div class="cod-text" style="font-size:11px">${f.turnoRaw.substring(0,35)}</div>`
     }
 
-    if (esHistorial) {
-      // Vista historial: sin prioridad/alerta, muestra badge "Liberado"
+    if (!esCola) {
+      // Vista historial / reprogramados
+      const badge = esReprog
+        ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)">🔄 Reprogramado</span>`
+        : `<span class="liberado-badge">✓ Liberado</span>`
       return `<tr>
         <td><span class="orden-badge ob-n">${i+1}</span></td>
         <td><div class="c-name">${f.cliente||'—'}</div>${f.dep?`<div class="c-sub">${f.dep}</div>`:''}</td>
         <td><div>${f.transporte||'—'}</div>${f.patente?`<div style="margin-top:3px"><span class="plate">${f.patente}</span></div>`:''}</td>
         <td><span style="font-family:'DM Mono',monospace;font-size:12px">${f.nViaje||'—'}</span></td>
         <td>${turnoHTML}</td>
-        <td><span class="liberado-badge">✓ Liberado</span></td>
-        <td>${turnoHTML}</td>
+        <td>${badge}</td>
+        <td><span style="font-size:11px;color:var(--muted)">${f.turnoRaw||'—'}</span></td>
         <td><span style="font-size:12px;color:var(--muted)">${f.darsena||'—'}</span></td>
         <td><span style="font-family:'DM Mono',monospace;font-size:12px">${f.bultos||'—'}</span></td>
         <td><span style="font-family:'DM Mono',monospace;font-size:12px">${f.pallets||'—'}</span></td>
