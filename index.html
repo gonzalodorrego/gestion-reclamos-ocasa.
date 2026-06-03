@@ -1,709 +1,563 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OCASA - Gestión de Reclamos</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --ocasa-calypso: #0099A8;
-            --ocasa-calypso-dark: #056572;
-            --ocasa-calypso-light: #E0F4F5;
-            --ocasa-navy: #002639;
-            --ocasa-success: #8FBF4C;
-            --ocasa-warning: #FFAB40;
-            --ocasa-danger: #D64045;
-            --ocasa-bg: #F5F5F5;
-            --ocasa-surface: #FFFFFF;
-            --ocasa-surface-alt: #EEEDEB;
-            --ocasa-border: #D6E2E5;
-            --ocasa-text-1: #1E2D32;
-            --ocasa-text-2: #4A6670;
-            --ocasa-text-3: #7A959E;
-            --ocasa-font: 'Montserrat', sans-serif;
-            --ocasa-radius-sm: 3px;
-            --ocasa-radius-md: 5px;
-            --ocasa-radius-lg: 6px;
-            --ocasa-radius-xl: 8px;
-        }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Torre de Control — Colectas PL3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0f1c;--panel:#111827;--panel2:#19253b;
+  --border:rgba(255,255,255,0.07);--text:#e2e8f0;--muted:#64748b;
+  --teal:#00d4aa;--blue:#3b82f6;--red:#ef4444;--amber:#f59e0b;--green:#10b981;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;min-height:100vh}
+button{cursor:pointer;font-family:inherit;border:none;outline:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:2px}
 
-        body {
-            font-family: var(--ocasa-font);
-            background-color: var(--ocasa-bg);
-            color: var(--ocasa-text-1);
-        }
+#topbar{
+  background:var(--panel);border-bottom:1px solid var(--border);
+  padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#00d4aa,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-name{font-size:14px;font-weight:700;letter-spacing:.05em}
+.logo-sub{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+#clock{font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--teal)}
+#date-lbl{font-size:11px;color:var(--muted);text-align:right}
+#btn-sync{background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.3);color:var(--teal);border-radius:6px;padding:7px 16px;font-size:12px;font-weight:600;transition:all .15s}
+#btn-sync:hover{background:rgba(0,212,170,.2)}
+#btn-sync:disabled{opacity:.5;cursor:default}
+#sync-status{font-size:11px;color:var(--muted);min-width:160px;text-align:right}
 
-        /* ── FIX: clases custom que Tailwind no reconoce sin config ── */
-        .bg-ocasa-calypso     { background-color: var(--ocasa-calypso); }
-        .bg-ocasa-surface     { background-color: var(--ocasa-surface); }
-        .bg-ocasa-surface-alt { background-color: var(--ocasa-surface-alt); }
-        .bg-ocasa-navy        { background-color: var(--ocasa-navy); }
-        .bg-ocasa-danger      { background-color: var(--ocasa-danger); }
-        .border-ocasa-border  { border-color: var(--ocasa-border); }
-        .text-ocasa-calypso   { color: var(--ocasa-calypso); }
-        .text-ocasa-warning   { color: var(--ocasa-warning); }
-        .text-ocasa-danger    { color: var(--ocasa-danger); }
-        .text-ocasa-text-1    { color: var(--ocasa-text-1); }
-        .text-ocasa-text-2    { color: var(--ocasa-text-2); }
-        .text-ocasa-text-3    { color: var(--ocasa-text-3); }
+#kpis{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--border);background:var(--panel)}
+.kpi{padding:14px 20px;border-right:1px solid var(--border)}
+.kpi:last-child{border-right:none}
+.kpi-val{font-family:'DM Mono',monospace;font-size:28px;font-weight:700;line-height:1}
+.kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
+.c-teal{color:var(--teal)}.c-red{color:var(--red)}.c-amber{color:var(--amber)}.c-blue{color:var(--blue)}.c-green{color:var(--green)}
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: 6px;
-            background-color: var(--ocasa-calypso);
-            z-index: 300;
-            pointer-events: none;
-        }
+#next-banner{margin:16px 20px 0;background:var(--panel2);border:1px solid rgba(0,212,170,.3);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.next-dot{width:10px;height:10px;border-radius:50%;background:var(--teal);flex-shrink:0;animation:pulsar 1.4s ease-in-out infinite}
+@keyframes pulsar{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,212,170,.4)}50%{opacity:.7;box-shadow:0 0 0 6px rgba(0,212,170,0)}}
+.next-label{font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.15em;margin-bottom:2px}
+.next-client{font-size:18px;font-weight:700}
+.next-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.chip{font-size:11px;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:4px;padding:2px 8px}
+.next-turno-box{margin-left:auto;text-align:right}
+.turno-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.turno-hora{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:var(--red)}
+#countdown{font-family:'DM Mono',monospace;font-size:13px;margin-top:2px}
 
-        body { padding-top: 6px; }
+/* Tabs */
+#tabs{display:flex;gap:0;margin:16px 20px 0;border-bottom:1px solid var(--border)}
+.tab{
+  padding:8px 20px;font-size:12px;font-weight:600;color:var(--muted);
+  background:transparent;border:none;border-bottom:2px solid transparent;
+  cursor:pointer;transition:all .15s;letter-spacing:.03em;
+}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+.tab-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.1);border-radius:10px;
+  font-size:10px;font-weight:700;padding:1px 6px;margin-left:6px;
+}
+.tab.active .tab-badge{background:rgba(0,212,170,.2);color:var(--teal)}
 
-        @keyframes bell-swing {
-            0%   { transform: rotate(0); }
-            15%  { transform: rotate(15deg); }
-            30%  { transform: rotate(-15deg); }
-            45%  { transform: rotate(10deg); }
-            60%  { transform: rotate(-10deg); }
-            75%  { transform: rotate(0); }
-            100% { transform: rotate(0); }
-        }
+#filter-bar{display:flex;align-items:center;gap:8px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--panel)}
+.filter-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-right:4px}
+.fbtn{padding:4px 12px;border-radius:4px;font-size:11px;font-weight:600;background:transparent;border:1px solid var(--border);color:var(--muted);transition:all .15s}
+.fbtn:hover{border-color:rgba(255,255,255,.25);color:var(--text)}
+.fbtn.active{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.4);color:#93c5fd}
+#result-count{margin-left:auto;font-size:11px;color:var(--muted)}
 
-        .animate-bell svg { animation: bell-swing 2s infinite; color: var(--ocasa-danger) !important; }
+#table-wrap{overflow-x:auto;padding:0 20px 20px}
+#tabla{width:100%;border-collapse:collapse;margin-top:12px;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+#tabla th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:600;padding:10px 12px;text-align:left;background:#0b0f1c;border-bottom:1px solid var(--border);white-space:nowrap}
+#tabla td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+#tabla tr:last-child td{border-bottom:none}
+#tabla tr:hover td{background:rgba(255,255,255,.025)}
 
-        #notifPanel {
-            display: none;
-            position: absolute;
-            top: 65px; right: 0;
-            width: 320px; max-height: 480px;
-            background: var(--ocasa-surface);
-            border-radius: var(--ocasa-radius-xl);
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-            z-index: 200;
-            border: 1px solid var(--ocasa-border);
-        }
+/* Historial tabla — más tenue */
+#tabla.historial{opacity:.75}
+#tabla.historial th{background:#0a0d16}
 
-        #notifPanel.show { display: block; animation: slideIn 0.2s ease-out; }
+.orden-badge{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'DM Mono',monospace}
+.ob-1{background:rgba(0,212,170,.2);border:1px solid rgba(0,212,170,.5);color:var(--teal)}
+.ob-2{background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.4);color:var(--blue)}
+.ob-n{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted)}
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+.c-name{font-weight:600;color:var(--text)}
+.c-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.plate{font-family:'DM Mono',monospace;font-size:11px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:2px 7px;display:inline-block}
+.hora-badge{font-family:'DM Mono',monospace;font-size:13px;font-weight:700}
+.cod-text{font-size:11px;color:var(--muted);margin-top:1px}
 
-        #sidebar { transition: transform 0.3s ease; z-index: 100; }
+.pr-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.pr-alta{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.pr-media{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.pr-baja{background:rgba(100,116,139,.15);color:var(--muted);border:1px solid rgba(100,116,139,.2)}
 
-        @media (max-width: 768px) {
-            #sidebar { transform: translateX(-100%); position: fixed; height: 100vh; }
-            #sidebar.open { transform: translateX(0); }
-            #overlay.show { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; }
-        }
+.liberado-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
 
-        #menuContent { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
-        #menuContent.open { max-height: 500px; }
+.al-dot{width:8px;height:8px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:5px}
+.al-rojo{background:var(--red);box-shadow:0 0 6px rgba(239,68,68,.6);animation:parpadeo 1s infinite}
+.al-amarillo{background:var(--amber)}
+.al-verde{background:var(--green)}
+@keyframes parpadeo{0%,100%{opacity:1}50%{opacity:.3}}
+.al-label{font-size:11px}
+.al-label.rojo{color:#fca5a5}.al-label.amarillo{color:#fcd34d}.al-label.verde{color:#6ee7b7}
 
-        .menu-link {
-            display: flex; align-items: center;
-            gap: var(--ocasa-space-md, 16px);
-            padding: 12px 20px;
-            border-radius: var(--ocasa-radius-lg);
-            font-size: 11px; font-weight: 700;
-            color: var(--ocasa-text-3);
-            transition: all 0.2s;
-            text-transform: uppercase; letter-spacing: 0.05em;
-        }
+.row-alta td:first-child{border-left:3px solid rgba(239,68,68,.5)}
+.row-media td:first-child{border-left:3px solid rgba(245,158,11,.3)}
 
-        .menu-link:hover { background-color: var(--ocasa-surface-alt); color: var(--ocasa-calypso); }
+#estado-box{text-align:center;padding:60px 20px;color:var(--muted);font-size:13px}
+.spin{display:inline-block;animation:girar 1s linear infinite;margin-right:6px}
+@keyframes girar{to{transform:rotate(360deg)}}
+#empty-msg{text-align:center;padding:48px;color:var(--muted);font-size:13px;display:none}
 
-        .hero-bg {
-            background: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)),
-                        url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
-            background-size: cover; background-position: center;
-        }
-
-        #overlay { display: none; }
-
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: var(--ocasa-surface-alt); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--ocasa-border); border-radius: var(--ocasa-radius-xl); }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--ocasa-calypso); }
-
-        .status-positivo  { background-color: rgba(143,191,76,0.15); color: #5a7d2f; border: 1px solid rgba(143,191,76,0.3); }
-        .status-importante{ background-color: rgba(0,153,168,0.12); color: var(--ocasa-calypso-dark); border: 1px solid rgba(0,153,168,0.2); }
-        .status-atencion  { background-color: rgba(255,171,64,0.18); color: #d97a26; border: 1px solid rgba(255,171,64,0.3); }
-        .status-critico   { background-color: rgba(214,64,69,0.12); color: var(--ocasa-danger); border: 1px solid rgba(214,64,69,0.2); }
-        .row-marked       { background-color: rgba(214,64,69,0.06) !important; border-left: 3px solid var(--ocasa-danger) !important; }
-
-        /* ── Dashboard Stats ── */
-        .stat-card {
-            background: var(--ocasa-surface);
-            border: 1px solid var(--ocasa-border);
-            border-radius: var(--ocasa-radius-lg);
-            padding: 24px 28px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-            cursor: pointer;
-            transition: box-shadow 0.2s, transform 0.15s;
-            position: relative; overflow: hidden;
-        }
-        .stat-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }
-        .stat-card::after {
-            content: '';
-            position: absolute; bottom: 0; left: 0; right: 0;
-            height: 3px;
-            border-radius: 0 0 var(--ocasa-radius-lg) var(--ocasa-radius-lg);
-        }
-        .stat-card.total::after    { background: var(--ocasa-calypso); }
-        .stat-card.pending::after  { background: var(--ocasa-warning); }
-        .stat-card.resolved::after { background: var(--ocasa-success); }
-        .stat-card.high::after     { background: var(--ocasa-danger); }
-
-        .stat-num {
-            font-size: 52px; font-weight: 800; line-height: 1;
-            letter-spacing: -2px; color: var(--ocasa-text-1);
-        }
-        .stat-label {
-            font-size: 9px; font-weight: 800;
-            text-transform: uppercase; letter-spacing: 0.1em;
-            color: var(--ocasa-text-3); font-style: italic;
-            margin-bottom: 8px;
-        }
-        .stat-icon {
-            position: absolute; top: 20px; right: 20px;
-            opacity: 0.08; width: 48px; height: 48px;
-        }
-        .stat-delta {
-            font-size: 10px; font-weight: 700;
-            color: var(--ocasa-text-3); margin-top: 6px;
-        }
-
-        .chart-card {
-            background: var(--ocasa-surface);
-            border: 1px solid var(--ocasa-border);
-            border-radius: var(--ocasa-radius-lg);
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        }
-        .chart-title {
-            font-size: 10px; font-weight: 800;
-            text-transform: uppercase; letter-spacing: 0.08em;
-            color: var(--ocasa-text-3); font-style: italic;
-            margin-bottom: 20px; display: flex;
-            align-items: center; gap: 8px;
-        }
-        .chart-title span {
-            display: inline-block; width: 8px; height: 8px;
-            border-radius: 50%; background: var(--ocasa-calypso);
-        }
-
-        .top-bar {
-            height: 4px; border-radius: 4px;
-            background: var(--ocasa-calypso-light);
-            margin-top: 4px; position: relative; overflow: hidden;
-        }
-        .top-bar-fill {
-            position: absolute; top: 0; left: 0; bottom: 0;
-            background: var(--ocasa-calypso);
-            border-radius: 4px;
-            transition: width 0.8s cubic-bezier(.22,.61,.36,1);
-        }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .dash-anim { animation: fadeUp 0.35s ease both; }
-        .dash-anim:nth-child(1) { animation-delay: 0s; }
-        .dash-anim:nth-child(2) { animation-delay: 0.05s; }
-        .dash-anim:nth-child(3) { animation-delay: 0.10s; }
-        .dash-anim:nth-child(4) { animation-delay: 0.15s; }
-        .dash-anim:nth-child(5) { animation-delay: 0.20s; }
-        .dash-anim:nth-child(6) { animation-delay: 0.25s; }
-    </style>
+.error-box{margin:16px 20px 0;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:16px 20px;color:#fca5a5;font-size:13px;display:none}
+</style>
 </head>
-<body class="h-screen flex flex-col md:flex-row overflow-hidden">
+<body>
 
-    <div id="overlay" onclick="toggleSidebar()"></div>
+<div id="topbar">
+  <div class="logo">
+    <div class="logo-icon">🚛</div>
+    <div>
+      <div class="logo-name">TORRE DE CONTROL</div>
+      <div class="logo-sub">Colectas · PL3 Pilar</div>
+    </div>
+  </div>
+  <div style="text-align:right">
+    <div id="clock">--:--:--</div>
+    <div id="date-lbl"></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div id="sync-status">—</div>
+    <button id="btn-sync" onclick="cargarDatos()">↻ Actualizar</button>
+  </div>
+</div>
 
-    <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-72 bg-ocasa-surface border-r border-ocasa-border flex flex-col shrink-0">
-        <div class="p-8 border-b border-ocasa-border flex flex-col items-center">
-            <img src="logo_ocasa.png" alt="OCASA" class="max-w-[140px] mb-2 cursor-pointer" onclick="showView('home')">
-            <span class="text-[10px] text-ocasa-text-3 font-black tracking-widest uppercase italic">Logística Global</span>
-        </div>
+<div id="kpis">
+  <div class="kpi"><div class="kpi-val c-teal" id="k-total">—</div><div class="kpi-lbl">Cola activa</div></div>
+  <div class="kpi"><div class="kpi-val c-red"  id="k-alta">—</div><div class="kpi-lbl">Prioridad Alta</div></div>
+  <div class="kpi"><div class="kpi-val c-amber" id="k-media">—</div><div class="kpi-lbl">Con turno/hora</div></div>
+  <div class="kpi"><div class="kpi-val c-blue"  id="k-baja">—</div><div class="kpi-lbl">Sin turno</div></div>
+  <div class="kpi"><div class="kpi-val c-green" id="k-lib">—</div><div class="kpi-lbl">Liberados hoy</div></div>
+</div>
 
-        <nav class="flex-1 p-4 space-y-2">
-            <button onclick="toggleMenu()" class="w-full flex items-center justify-between px-6 py-4 bg-ocasa-calypso text-white rounded-lg font-bold shadow-lg shadow-cyan-500/20 active:scale-95 transition-all" style="border-radius: var(--ocasa-radius-xl);">
-                <div class="flex items-center gap-3">
-                    <i data-lucide="menu" class="w-5 h-5"></i>
-                    <span class="text-sm tracking-tight uppercase">Menú Principal</span>
-                </div>
-                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" id="menuChevron"></i>
-            </button>
+<div id="next-banner"><span style="color:var(--muted);font-size:13px">Cargando...</span></div>
+<div class="error-box" id="error-box"></div>
 
-            <div id="menuContent" class="mt-2 space-y-1 bg-ocasa-surface-alt rounded-lg p-2 border border-ocasa-border" style="border-radius: var(--ocasa-radius-lg);">
-                <button onclick="showView('carga'); toggleSidebar();" class="menu-link w-full" style="border-radius: var(--ocasa-radius-md);"><i data-lucide="file-plus" class="w-4 h-4"></i> Cargar Reclamo</button>
-                <button onclick="showView('historico'); toggleSidebar();" class="menu-link w-full" style="border-radius: var(--ocasa-radius-md);"><i data-lucide="history" class="w-4 h-4"></i> Histórico</button>
-                <button onclick="showView('stats'); toggleSidebar();" class="menu-link w-full" style="border-radius: var(--ocasa-radius-md);"><i data-lucide="pie-chart" class="w-4 h-4"></i> Estadísticas</button>
-            </div>
-        </nav>
+<!-- TABS -->
+<div id="tabs">
+  <button class="tab active" onclick="setTab('cola',this)">
+    Cola activa <span class="tab-badge" id="badge-cola">—</span>
+  </button>
+  <button class="tab" onclick="setTab('historial',this)">
+    Historial liberados <span class="tab-badge" id="badge-hist">—</span>
+  </button>
+</div>
 
-        <div class="p-6 border-t border-ocasa-border flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-ocasa-surface-alt flex items-center justify-center font-bold text-ocasa-calypso border border-ocasa-border text-xs" style="border-radius: var(--ocasa-radius-xl);">GD</div>
-            <div class="flex flex-col">
-                <span class="text-xs font-bold leading-tight text-ocasa-text-1">Gonzalo Dorrego</span>
-                <span class="text-[9px] text-ocasa-text-3 uppercase font-bold tracking-tighter">Admin Sistema</span>
-            </div>
-        </div>
-    </aside>
+<div id="filter-bar">
+  <span class="filter-label">Prioridad:</span>
+  <button class="fbtn active" onclick="setFiltro('todos',this)">Todos</button>
+  <button class="fbtn" onclick="setFiltro('ALTA',this)">🔴 Alta</button>
+  <button class="fbtn" onclick="setFiltro('MEDIA',this)">🟡 Con turno</button>
+  <button class="fbtn" onclick="setFiltro('BAJA',this)">⚪ Sin turno</button>
+  <span id="result-count"></span>
+</div>
 
-    <!-- MAIN -->
-    <main class="flex-1 flex flex-col min-w-0 bg-ocasa-surface relative">
-        <header class="h-16 md:h-20 bg-ocasa-surface border-b border-ocasa-border px-6 md:px-10 flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()" class="md:hidden p-2 text-ocasa-text-2"><i data-lucide="menu"></i></button>
-                <span class="hidden md:block w-1.5 h-6 bg-ocasa-calypso rounded-full"></span>
-                <h2 id="viewTitle" class="text-sm md:text-lg font-black text-ocasa-text-1 uppercase italic tracking-tighter">Panel de Gestión</h2>
-            </div>
+<div id="table-wrap">
+  <div id="estado-box"><span class="spin">⟳</span> Conectando con Google Sheets...</div>
+  <table id="tabla" style="display:none">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Cliente</th>
+        <th>Transporte / Patente</th>
+        <th>N° Viaje</th>
+        <th>Turno detectado</th>
+        <th>Prioridad</th>
+        <th>Alerta</th>
+        <th>Dársena</th>
+        <th>Bultos</th>
+        <th>Pallets</th>
+        <th>Detalle</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div id="empty-msg">No hay colectas para el filtro seleccionado.</div>
+</div>
 
-            <div class="relative">
-                <button onclick="toggleNotificaciones()" id="btnBell" class="p-2 rounded-full hover:bg-ocasa-surface-alt transition-all relative" style="border-radius: var(--ocasa-radius-lg);">
-                    <div id="bellWrapper"><i data-lucide="bell" class="w-6 h-6 text-ocasa-text-3"></i></div>
-                    <span id="badgeNotif" class="hidden absolute top-0 right-0 bg-ocasa-danger text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-ocasa-surface" style="border-radius: var(--ocasa-radius-xl);">0</span>
-                </button>
+<script>
+const SHEET_ID = '1qSptp0U_8fuo_bAcsQtsLl5ROVzCN44kZHKuEHC24vI'
+const GID      = '2114457503'
 
-                <div id="notifPanel">
-                    <div class="p-4 border-b border-ocasa-border bg-ocasa-surface-alt flex justify-between items-center" style="border-radius: var(--ocasa-radius-xl) var(--ocasa-radius-xl) 0 0;">
-                        <span class="text-[10px] font-black uppercase text-ocasa-text-3 italic">Alertas SLA (+24hs)</span>
-                        <span id="notifCount" class="bg-ocasa-danger text-white text-[9px] px-2 py-0.5 rounded-full font-bold" style="border-radius: var(--ocasa-radius-sm);">0</span>
-                    </div>
-                    <div id="notifList" class="overflow-y-auto max-h-[350px] p-2 space-y-2"></div>
-                </div>
-            </div>
-        </header>
+function sheetUrl() {
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}&headers=1`
+}
 
-        <div id="contentFrame" class="flex-1 overflow-y-auto p-4 md:p-10"></div>
-    </main>
+// ── PARSER DE TURNO ───────────────────────────────────────────
+function parseTurno(raw) {
+  const r = { horaTexto:null, horaMin:null, prioridad:'BAJA', tipoTurno:'LIBRE', codigo:null }
+  if (!raw || !raw.trim()) return r
+  const t = raw.trim()
 
-    <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby6ZbP0Zs6AkB4CxinKNsGW6wC11VB0PYGbLOhe7cY_iFVDsfWYfd1c3PFPN3ghfKw0pw/exec';
-        let datosFull = [];
-        let reclamosAtrasados = [];
-        let chartInstances = {};
+  if (/prioridad\s+de\s+carga|dar\s+prioridad|urgente/i.test(t)) {
+    r.prioridad = 'ALTA'; r.tipoTurno = 'PRIORIDAD'
+  }
 
-        function destroyCharts() {
-            Object.values(chartInstances).forEach(c => c.destroy());
-            chartInstances = {};
+  const m1 = t.match(/\b(\d{1,2}):(\d{2})\b/)
+  if (m1) {
+    const hh=parseInt(m1[1]), mm=parseInt(m1[2])
+    if (hh<=23 && mm<=59) {
+      r.horaTexto=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`
+      r.horaMin=hh*60+mm
+      if (r.tipoTurno!=='PRIORIDAD') r.tipoTurno='HORA'
+    }
+  }
+
+  if (!r.horaTexto) {
+    for (const parte of t.split(/[\s\-–\/]+/)) {
+      if (/^\d{7,}$/.test(parte)) continue
+      const m2 = parte.match(/^(\d{1,2})\s*[hH][sS]?$/)
+      if (m2) {
+        const hh=parseInt(m2[1])
+        if (hh<=23) {
+          r.horaTexto=`${String(hh).padStart(2,'0')}:00`
+          r.horaMin=hh*60
+          if (r.tipoTurno!=='PRIORIDAD') r.tipoTurno='HORA'
+          break
         }
+      }
+    }
+  }
 
-        function toggleSidebar() {
-            if (window.innerWidth >= 768) return;
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('show');
-        }
+  const mov = t.match(/\b(MOV[\w\d]+)\b/i)
+  if (mov) r.codigo = mov[1].toUpperCase()
+  if (!r.codigo) { const n=t.match(/\b(\d{6,})\b/); if(n) r.codigo=n[1] }
+  if (r.codigo && r.tipoTurno==='LIBRE') r.tipoTurno='COD'
 
-        function toggleMenu() {
-            document.getElementById('menuContent').classList.toggle('open');
-            document.getElementById('menuChevron').classList.toggle('rotate-180');
-        }
+  if (r.prioridad!=='ALTA')
+    r.prioridad = (r.horaTexto||r.codigo) ? 'MEDIA' : 'BAJA'
 
-        function toggleNotificaciones() {
-            document.getElementById('notifPanel').classList.toggle('show');
-        }
+  return r
+}
 
-        window.addEventListener('click', (e) => {
-            if (!document.getElementById('btnBell').contains(e.target) &&
-                !document.getElementById('notifPanel').contains(e.target)) {
-                document.getElementById('notifPanel').classList.remove('show');
-            }
-        });
+function calcularAlerta(horaMin) {
+  if (horaMin===null) return null
+  const n=new Date(), ahoraMin=n.getHours()*60+n.getMinutes()
+  const d=horaMin-ahoraMin
+  if (d<0)   return 'ROJO'
+  if (d<=30) return 'ROJO'
+  if (d<=60) return 'AMARILLO'
+  return 'VERDE'
+}
 
-        function procesarAlertas() {
-            const ahora = new Date();
-            reclamosAtrasados = datosFull.filter(item => {
-                const fechaIngreso = new Date(item.fecha);
-                const diff = (ahora - fechaIngreso) / (1000 * 60 * 60);
-                return item.estado === 'Pendiente' && diff >= 24;
-            });
+function scoreOrden(prioridad, horaMin) {
+  if (prioridad==='ALTA')  return horaMin!==null ? 100000-horaMin : 109999
+  if (prioridad==='MEDIA') return horaMin!==null ? 50000-horaMin  : 40001
+  return 0
+}
 
-            const badge  = document.getElementById('badgeNotif');
-            const wrapper = document.getElementById('bellWrapper');
-            const list   = document.getElementById('notifList');
-            const count  = document.getElementById('notifCount');
+// ── RELOJ ─────────────────────────────────────────────────────
+function tickClock() {
+  const now=new Date()
+  document.getElementById('clock').textContent=now.toLocaleTimeString('es-AR',{hour12:false})
+  const s=now.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'})
+  document.getElementById('date-lbl').textContent=s.charAt(0).toUpperCase()+s.slice(1)
+}
+setInterval(tickClock,1000); tickClock()
 
-            if (reclamosAtrasados.length > 0) {
-                badge.innerText = reclamosAtrasados.length;
-                badge.classList.remove('hidden');
-                wrapper.classList.add('animate-bell');
-                count.innerText = reclamosAtrasados.length;
-                list.innerHTML = reclamosAtrasados.map(r => `
-                    <div class="p-4 bg-ocasa-surface border border-ocasa-border rounded-lg shadow-sm" style="border-left:4px solid var(--ocasa-danger);border-radius:var(--ocasa-radius-lg);">
-                        <p class="text-[11px] font-black text-ocasa-text-1 uppercase italic">${r.tipo}</p>
-                        <p class="text-[10px] text-ocasa-text-3 font-bold mt-1">Guía: ${r.remito}</p>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-[9px] text-ocasa-danger font-bold uppercase italic">Vencido</span>
-                            <button onclick="verReclamo('${r.remito}')" class="bg-ocasa-navy text-white text-[9px] px-3 py-1.5 rounded font-black uppercase" style="border-radius:var(--ocasa-radius-md);">Ver</button>
-                        </div>
-                    </div>`).join('');
-            } else {
-                badge.classList.add('hidden');
-                wrapper.classList.remove('animate-bell');
-                list.innerHTML = `<p class="p-8 text-center text-ocasa-text-3 text-xs font-bold italic">Todo al día</p>`;
-            }
-        }
+// ── ESTADO GLOBAL ─────────────────────────────────────────────
+let COLA=[], HISTORIAL=[], filtroActivo='todos', tabActivo='cola'
 
-        function verReclamo(remito) {
-            document.getElementById('notifPanel').classList.remove('show');
-            showView('historico', remito);
-        }
+// ── CARGA ─────────────────────────────────────────────────────
+async function cargarDatos() {
+  const btn=document.getElementById('btn-sync')
+  btn.disabled=true; btn.textContent='⟳ Actualizando...'
+  document.getElementById('sync-status').textContent='Conectando...'
+  document.getElementById('estado-box').style.display='block'
+  document.getElementById('estado-box').innerHTML='<span class="spin">⟳</span> Cargando datos...'
+  document.getElementById('tabla').style.display='none'
+  document.getElementById('error-box').style.display='none'
 
-        async function showView(view, filter = null) {
-            destroyCharts();
-            const frame = document.getElementById('contentFrame');
-            const title = document.getElementById('viewTitle');
-            frame.className = "flex-1 overflow-y-auto p-4 md:p-10";
+  try {
+    const res = await fetch(sheetUrl())
+    const txt = await res.text()
+    const jsonStr = txt.replace(/^[^{]*/, '').replace(/\);?\s*$/, '')
+    const data = JSON.parse(jsonStr)
+    if (!data.table || !data.table.rows) throw new Error('Sin datos en la respuesta')
 
-            if (view === 'home') {
-                frame.classList.add('hero-bg', 'flex', 'items-center', 'justify-center');
-                title.innerText = "Inicio";
-                frame.innerHTML = `
-                    <div class="text-center bg-ocasa-surface/80 backdrop-blur-md p-10 rounded-lg shadow-2xl border border-ocasa-surface w-full max-w-lg" style="border-radius:var(--ocasa-radius-xl);">
-                        <i data-lucide="package" class="w-16 h-16 text-ocasa-calypso mx-auto mb-4"></i>
-                        <h1 class="text-3xl font-black text-ocasa-text-1 uppercase italic tracking-tighter">OCASA Logística</h1>
-                    </div>`;
-            }
+    // Mapear columnas por header
+    const cols = data.table.cols.map(c=>(c.label||'').toLowerCase().trim())
+    const idx = {
+      transporte: cols.findIndex(c=>c.includes('transporte')),
+      patente:    cols.findIndex(c=>c.includes('patente')),
+      dep:        cols.findIndex(c=>c.includes('dep')),
+      nViaje:     cols.findIndex(c=>c.includes('n°')||c.includes('viaje')||c.includes('nro')),
+      cliente:    cols.findIndex(c=>c.includes('cliente')),
+      turno:      cols.findIndex(c=>c.includes('turno')),
+      bultos:     cols.findIndex(c=>c.includes('bulto')),
+      pallets:    cols.findIndex(c=>c.includes('pallet')),
+      darsena:    cols.findIndex(c=>c.includes('d'+'ársena')||c.includes('darsena')),
+      detalle:    cols.findIndex(c=>c.includes('detalle')),
+    }
+    // Fallback posicional: A=0 B=1 C=2 D=3 E=4 F=5 G=6 H=7 I=8 J=9 K=10 N=13
+    if (idx.transporte<0) idx.transporte=1
+    if (idx.patente<0)    idx.patente=2
+    if (idx.dep<0)        idx.dep=3
+    if (idx.nViaje<0)     idx.nViaje=5
+    if (idx.cliente<0)    idx.cliente=6
+    if (idx.turno<0)      idx.turno=7
+    if (idx.bultos<0)     idx.bultos=8
+    if (idx.pallets<0)    idx.pallets=9
+    if (idx.darsena<0)    idx.darsena=10
+    if (idx.detalle<0)    idx.detalle=13  // columna N
 
-            else if (view === 'carga') {
-                title.innerText = "Nueva Carga";
-                frame.innerHTML = `
-                    <div class="max-w-xl mx-auto bg-ocasa-surface rounded-lg shadow-xl p-8 border border-ocasa-border" style="border-radius:var(--ocasa-radius-xl);">
-                        <form id="formCarga" class="space-y-4">
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-black text-ocasa-text-3 uppercase italic ml-2">Tipo de reclamo</label>
-                                <select id="f-tipo" class="w-full p-4 rounded bg-ocasa-surface-alt border border-ocasa-border font-bold text-ocasa-text-1" style="border-radius:var(--ocasa-radius-md);">
-                                    <option>Caja rota</option><option>Producto equivocado</option><option>No recibí producto</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-black text-ocasa-text-3 uppercase italic ml-2">Remito</label>
-                                <input type="text" id="f-remito" required class="w-full p-4 rounded bg-ocasa-surface-alt border border-ocasa-border font-black outline-none text-ocasa-text-1" style="border-radius:var(--ocasa-radius-md);">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-black text-ocasa-text-3 uppercase italic ml-2">Prioridad</label>
-                                <select id="f-prioridad" class="w-full p-4 rounded bg-ocasa-surface-alt border border-ocasa-border font-bold text-ocasa-text-1" style="border-radius:var(--ocasa-radius-md);">
-                                    <option>Baja</option><option>Media</option><option>Alta</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-black text-ocasa-text-3 uppercase italic ml-2">Descripción</label>
-                                <textarea id="f-descripcion" required class="w-full p-4 rounded bg-ocasa-surface-alt border border-ocasa-border font-medium outline-none h-24 text-ocasa-text-1" style="border-radius:var(--ocasa-radius-md);"></textarea>
-                            </div>
-                            <button type="submit" class="w-full bg-ocasa-calypso text-white py-5 rounded font-black uppercase text-sm shadow-xl active:scale-95 transition-all mt-4 tracking-widest" style="border-radius:var(--ocasa-radius-lg);">Sincronizar Reclamo</button>
-                        </form>
-                    </div>`;
+    const cel=(row,i)=>i>=0?(row.c[i]?.v??row.c[i]?.f??''):''
 
-                document.getElementById('formCarga').addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const btn = e.target.querySelector('button');
-                    btn.disabled = true; btn.innerText = "Enviando...";
-                    const payload = {
-                        fecha: new Date().toISOString(),
-                        tipo: document.getElementById('f-tipo').value,
-                        remito: document.getElementById('f-remito').value,
-                        prioridad: document.getElementById('f-prioridad').value,
-                        descripcion: document.getElementById('f-descripcion').value,
-                        estado: "Pendiente", usuario: "Gonzalo Dorrego"
-                    };
-                    await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                    alert("¡Cargado!");
-                    init();
-                });
-            }
+    COLA=[]; HISTORIAL=[]
 
-            else if (view === 'historico') {
-                title.innerText = filter ? `Búsqueda: ${filter}` : "Historial General";
-                frame.innerHTML = `
-                    <div class="max-w-6xl mx-auto space-y-4">
-                        <div class="bg-ocasa-surface p-4 rounded-lg flex justify-between items-center shadow-sm border border-ocasa-border" style="border-radius:var(--ocasa-radius-lg);">
-                            <input type="text" id="searchTable" oninput="filtrarTabla()" placeholder="Buscar en todos los campos..." class="p-3 bg-ocasa-surface-alt border border-ocasa-border rounded text-sm w-64 outline-none text-ocasa-text-1" style="border-radius:var(--ocasa-radius-md);" value="${filter || ''}">
-                            ${filter ? `<button onclick="showView('historico')" class="text-[9px] font-black text-ocasa-danger bg-ocasa-danger/10 px-4 py-2 rounded border border-ocasa-danger/20 uppercase italic" style="border-radius:var(--ocasa-radius-md);">Limpiar</button>` : ''}
-                        </div>
-                        <div class="bg-ocasa-surface rounded-lg border border-ocasa-border overflow-hidden shadow-sm" style="border-radius:var(--ocasa-radius-lg);">
-                            <div class="overflow-x-auto custom-scrollbar">
-                                <table class="w-full text-left min-w-[1000px]">
-                                    <thead class="bg-ocasa-navy text-[10px] font-black text-white uppercase" style="letter-spacing:0.05em;">
-                                        <tr>
-                                            <th class="p-4">Fecha</th>
-                                            <th class="p-4">Remito</th>
-                                            <th class="p-4">Tipo</th>
-                                            <th class="p-4">Prioridad</th>
-                                            <th class="p-4">Descripción</th>
-                                            <th class="p-4">Resolución</th>
-                                            <th class="p-4 text-right">Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tablaBody" class="text-sm"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>`;
+    for (const row of data.table.rows) {
+      const cliente  = String(cel(row,idx.cliente)||'').trim()
+      const nViaje   = String(cel(row,idx.nViaje)||'').trim()
+      if (!cliente && !nViaje) continue
 
-                let data = datosFull;
-                if (filter === 'Pendiente') {
-                    data = datosFull.filter(d => d.estado === 'Pendiente');
-                } else if (filter) {
-                    const term = filter.toLowerCase();
-                    data = datosFull.filter(d =>
-                        Object.values(d).some(val => val.toString().toLowerCase().includes(term))
-                    );
-                }
-                renderizarTabla(data);
-            }
+      const turnoRaw = String(cel(row,idx.turno)||'').trim()
+      const detalle  = String(cel(row,idx.detalle)||'').trim()
+      const parsed   = parseTurno(turnoRaw)
+      const alerta   = calcularAlerta(parsed.horaMin)
+      const score    = scoreOrden(parsed.prioridad, parsed.horaMin)
 
-            else if (view === 'stats') {
-                title.innerText = "Estadísticas";
+      const fila = {
+        transporte: String(cel(row,idx.transporte)||'').trim(),
+        patente:    String(cel(row,idx.patente)||'').trim(),
+        dep:        String(cel(row,idx.dep)||'').trim(),
+        nViaje, cliente, turnoRaw, detalle,
+        bultos:     String(cel(row,idx.bultos)||'').trim(),
+        pallets:    String(cel(row,idx.pallets)||'').trim(),
+        darsena:    String(cel(row,idx.darsena)||'').trim(),
+        parsed, alerta, score
+      }
 
-                const total      = datosFull.length;
-                const pendientes = datosFull.filter(d => d.estado === 'Pendiente').length;
-                const resueltos  = datosFull.filter(d => d.estado !== 'Pendiente').length;
-                const altaPrio   = datosFull.filter(d => (d.prioridad || '').toLowerCase() === 'alta').length;
+      // "Liberado" (case-insensitive) → historial; todo lo demás → cola activa
+      if (/^liberado$/i.test(detalle)) {
+        HISTORIAL.push(fila)
+      } else {
+        COLA.push(fila)
+      }
+    }
 
-                const porTipo = {};
-                datosFull.forEach(d => { porTipo[d.tipo] = (porTipo[d.tipo] || 0) + 1; });
+    COLA.sort((a,b)=>b.score-a.score)
+    // Historial: orden inverso (los más recientes primero — últimas filas del sheet)
+    HISTORIAL.reverse()
 
-                const estadoMap = {};
-                datosFull.forEach(d => { estadoMap[d.estado] = (estadoMap[d.estado] || 0) + 1; });
+    // Actualizar badges de tabs
+    document.getElementById('badge-cola').textContent=COLA.length
+    document.getElementById('badge-hist').textContent=HISTORIAL.length
 
-                const mesesMap = {};
-                const ahora = new Date();
-                for (let i = 5; i >= 0; i--) {
-                    const d = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
-                    const k = d.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
-                    mesesMap[k] = 0;
-                }
-                datosFull.forEach(d => {
-                    if (!d.fecha) return;
-                    const fd = new Date(d.fecha);
-                    const k  = fd.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
-                    if (k in mesesMap) mesesMap[k]++;
-                });
+    const ts=new Date().toLocaleTimeString('es-AR',{hour12:false})
+    document.getElementById('sync-status').textContent=`✓ ${ts}`
+    renderTodo()
 
-                const topTipos = Object.entries(porTipo).sort((a,b) => b[1]-a[1]).slice(0,5);
-                const maxTop   = topTipos[0]?.[1] || 1;
+  } catch(e) {
+    document.getElementById('estado-box').style.display='none'
+    const eb=document.getElementById('error-box')
+    eb.style.display='block'
+    eb.innerHTML=`⚠ Error: <b>${e.message}</b><br>
+      <small style="opacity:.7;line-height:1.8">
+        1. Abrí el Sheet → Compartir → "Cualquier persona con el enlace" → Lector<br>
+        2. Archivo → Publicar en la web → Publicar<br>
+        3. Hacé click en "↻ Actualizar"
+      </small>`
+    document.getElementById('sync-status').textContent='⚠ Error'
+    console.error(e)
+  }
 
-                const prioMap = { Alta: 0, Media: 0, Baja: 0 };
-                datosFull.forEach(d => {
-                    const p = (d.prioridad || 'Baja');
-                    const key = p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
-                    if (key in prioMap) prioMap[key]++;
-                });
+  btn.disabled=false; btn.textContent='↻ Actualizar'
+}
 
-                frame.innerHTML = `
-                <div class="max-w-6xl mx-auto space-y-6">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="stat-card total dash-anim" onclick="showView('historico')">
-                            <p class="stat-label">Total Registros</p>
-                            <p class="stat-num">${total}</p>
-                            <p class="stat-delta">Ver historial completo →</p>
-                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--ocasa-calypso)"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        </div>
-                        <div class="stat-card pending dash-anim" onclick="showView('historico','Pendiente')">
-                            <p class="stat-label">Pendientes</p>
-                            <p class="stat-num" style="color:var(--ocasa-warning)">${pendientes}</p>
-                            <p class="stat-delta">Ver pendientes →</p>
-                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--ocasa-warning)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        </div>
-                        <div class="stat-card resolved dash-anim" onclick="showView('historico')">
-                            <p class="stat-label">Resueltos</p>
-                            <p class="stat-num" style="color:var(--ocasa-success)">${resueltos}</p>
-                            <p class="stat-delta">${total > 0 ? Math.round(resueltos/total*100) : 0}% del total</p>
-                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--ocasa-success)"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </div>
-                        <div class="stat-card high dash-anim" onclick="showView('historico')">
-                            <p class="stat-label">Alta Prioridad</p>
-                            <p class="stat-num" style="color:var(--ocasa-danger)">${altaPrio}</p>
-                            <p class="stat-delta">${total > 0 ? Math.round(altaPrio/total*100) : 0}% del total</p>
-                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--ocasa-danger)"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        </div>
-                    </div>
+// ── RENDER ────────────────────────────────────────────────────
+function renderTodo() {
+  document.getElementById('k-total').textContent  = COLA.length
+  document.getElementById('k-alta').textContent   = COLA.filter(f=>f.parsed.prioridad==='ALTA').length
+  document.getElementById('k-media').textContent  = COLA.filter(f=>f.parsed.prioridad==='MEDIA').length
+  document.getElementById('k-baja').textContent   = COLA.filter(f=>f.parsed.prioridad==='BAJA').length
+  document.getElementById('k-lib').textContent    = HISTORIAL.length
+  renderBanner()
+  renderTabla()
+}
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="chart-card md:col-span-2 dash-anim">
-                            <p class="chart-title"><span></span> Evolución Mensual</p>
-                            <canvas id="chartMeses" height="110"></canvas>
-                        </div>
-                        <div class="chart-card dash-anim">
-                            <p class="chart-title"><span style="background:var(--ocasa-warning)"></span> Por Estado</p>
-                            <canvas id="chartEstado" height="160"></canvas>
-                            <div id="legendEstado" class="mt-4 space-y-2"></div>
-                        </div>
-                    </div>
+function renderBanner() {
+  const banner=document.getElementById('next-banner')
+  // Banner solo muestra el próximo de la COLA activa
+  const f=COLA[0]
+  if (!f) { banner.innerHTML='<span style="color:var(--green);font-size:13px">✓ Sin colectas pendientes en la cola.</span>'; return }
+  const p=f.parsed
+  const alColor=f.alerta==='ROJO'?'var(--red)':f.alerta==='AMARILLO'?'var(--amber)':'var(--teal)'
+  const prBadge=p.prioridad==='ALTA'
+    ?`<span class="pr-badge pr-alta">🔴 PRIORIDAD ALTA</span>`
+    :p.prioridad==='MEDIA'
+    ?`<span class="pr-badge pr-media">🟡 CON TURNO</span>`
+    :`<span class="pr-badge pr-baja">Sin turno</span>`
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="chart-card dash-anim">
-                            <p class="chart-title"><span style="background:var(--ocasa-navy)"></span> Top Tipos de Reclamo</p>
-                            <div class="space-y-3 mt-2">
-                                ${topTipos.length === 0
-                                    ? `<p class="text-center text-ocasa-text-3 text-xs italic py-8">Sin datos</p>`
-                                    : topTipos.map(([tipo, cnt]) => `
-                                        <div>
-                                            <div class="flex justify-between items-center mb-1">
-                                                <span class="text-[11px] font-bold text-ocasa-text-2">${tipo}</span>
-                                                <span class="text-[11px] font-black text-ocasa-text-1">${cnt}</span>
-                                            </div>
-                                            <div class="top-bar">
-                                                <div class="top-bar-fill" style="width:${Math.round(cnt/maxTop*100)}%"></div>
-                                            </div>
-                                        </div>`).join('')
-                                }
-                            </div>
-                        </div>
-                        <div class="chart-card dash-anim">
-                            <p class="chart-title"><span style="background:var(--ocasa-danger)"></span> Distribución por Prioridad</p>
-                            <canvas id="chartPrioridad" height="200"></canvas>
-                        </div>
-                    </div>
-                </div>`;
+  let turnoBox=''
+  if (p.horaTexto) {
+    turnoBox=`<div class="next-turno-box">
+      <div class="turno-lbl">Turno en el cliente</div>
+      <div class="turno-hora">${p.horaTexto} hs</div>
+      <div id="countdown" style="color:${alColor}"></div>
+    </div>`
+  }
 
-                lucide.createIcons();
+  banner.innerHTML=`
+    <div class="next-dot"></div>
+    <div style="flex:1;min-width:0">
+      <div class="next-label">▶ Próximo para cargar</div>
+      <div class="next-client">${f.cliente||'—'}</div>
+      <div class="next-meta">
+        ${f.transporte?`<span class="chip">${f.transporte}</span>`:''}
+        ${f.patente?`<span class="chip">${f.patente}</span>`:''}
+        ${f.nViaje?`<span class="chip">Viaje #${f.nViaje}</span>`:''}
+        ${f.darsena?`<span class="chip">Dársena ${f.darsena}</span>`:''}
+        ${prBadge}
+      </div>
+      ${f.turnoRaw?`<div style="font-size:11px;color:var(--muted);margin-top:6px">📋 ${f.turnoRaw}</div>`:''}
+    </div>
+    ${turnoBox}`
 
-                Chart.defaults.font.family = "'Montserrat', sans-serif";
-                Chart.defaults.font.weight = '700';
-                Chart.defaults.color      = '#7A959E';
+  if (p.horaTexto) startCountdown(p.horaMin)
+}
 
-                chartInstances.meses = new Chart(document.getElementById('chartMeses'), {
-                    type: 'line',
-                    data: {
-                        labels: Object.keys(mesesMap),
-                        datasets: [{
-                            label: 'Reclamos',
-                            data: Object.values(mesesMap),
-                            borderColor: '#0099A8',
-                            backgroundColor: 'rgba(0,153,168,0.08)',
-                            borderWidth: 2.5,
-                            pointBackgroundColor: '#0099A8',
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' } } },
-                            y: { beginAtZero: true, grid: { color: '#F0EEEC' }, ticks: { precision: 0, font: { size: 10, weight: '700' } } }
-                        }
-                    }
-                });
+let cdInterval=null
+function startCountdown(horaMin) {
+  if (cdInterval) clearInterval(cdInterval)
+  function tick() {
+    const el=document.getElementById('countdown'); if(!el){clearInterval(cdInterval);return}
+    const now=new Date()
+    const diffSec=(horaMin-now.getHours()*60-now.getMinutes())*60-now.getSeconds()
+    if (diffSec<0){el.textContent='⚠ TURNO VENCIDO';return}
+    const h=Math.floor(diffSec/3600),m=Math.floor((diffSec%3600)/60),s=diffSec%60
+    el.textContent=`⏱ ${h>0?h+':':''}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} para el turno`
+  }
+  tick(); cdInterval=setInterval(tick,1000)
+}
 
-                const estadoLabels = Object.keys(estadoMap);
-                const estadoValues = Object.values(estadoMap);
-                const estadoColors = estadoLabels.map(l =>
-                    l === 'Pendiente' ? '#FFAB40' : l === 'Resuelto' ? '#8FBF4C' : '#0099A8'
-                );
+function renderTabla() {
+  const estado=document.getElementById('estado-box')
+  const tabla=document.getElementById('tabla')
+  const empty=document.getElementById('empty-msg')
+  const filterBar=document.getElementById('filter-bar')
+  estado.style.display='none'
 
-                chartInstances.estado = new Chart(document.getElementById('chartEstado'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: estadoLabels,
-                        datasets: [{ data: estadoValues, backgroundColor: estadoColors, borderWidth: 2, borderColor: '#fff' }]
-                    },
-                    options: { responsive: true, cutout: '70%', plugins: { legend: { display: false } } }
-                });
+  const esHistorial = tabActivo==='historial'
 
-                const legendEl = document.getElementById('legendEstado');
-                estadoLabels.forEach((lbl, i) => {
-                    legendEl.innerHTML += `
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span style="width:10px;height:10px;border-radius:50%;background:${estadoColors[i]};display:inline-block;"></span>
-                                <span class="text-[10px] font-bold text-ocasa-text-2 uppercase">${lbl}</span>
-                            </div>
-                            <span class="text-[11px] font-black text-ocasa-text-1">${estadoValues[i]}</span>
-                        </div>`;
-                });
+  // En historial ocultamos filtros de prioridad
+  filterBar.style.display = esHistorial ? 'none' : 'flex'
+  tabla.className = esHistorial ? 'historial' : ''
 
-                chartInstances.prioridad = new Chart(document.getElementById('chartPrioridad'), {
-                    type: 'bar',
-                    data: {
-                        labels: ['Alta', 'Media', 'Baja'],
-                        datasets: [{
-                            data: [prioMap.Alta, prioMap.Media, prioMap.Baja],
-                            backgroundColor: ['rgba(214,64,69,0.85)', 'rgba(255,171,64,0.85)', 'rgba(143,191,76,0.85)'],
-                            borderRadius: 4, borderSkipped: false
-                        }]
-                    },
-                    options: {
-                        responsive: true, indexAxis: 'y',
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { beginAtZero: true, grid: { color: '#F0EEEC' }, ticks: { precision: 0, font: { size: 10 } } },
-                            y: { grid: { display: false }, ticks: { font: { size: 11, weight: '800' } } }
-                        }
-                    }
-                });
-            }
+  let fuente = esHistorial ? HISTORIAL : COLA
+  if (!esHistorial && filtroActivo!=='todos')
+    fuente = fuente.filter(f=>f.parsed.prioridad===filtroActivo)
 
-            lucide.createIcons();
-        }
+  document.getElementById('result-count').textContent=`${fuente.length} colecta${fuente.length!==1?'s':''}`
 
-        function renderizarTabla(data) {
-            const tbody = document.getElementById('tablaBody');
-            if (!tbody) return;
+  if (!fuente.length){tabla.style.display='none';empty.style.display='block';return}
+  tabla.style.display='table'; empty.style.display='none'
 
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-20 text-center text-ocasa-text-3 font-bold italic">No existen registros</td></tr>`;
-                return;
-            }
+  // Ajustar header según tab
+  const thead = tabla.querySelector('thead tr')
+  if (esHistorial) {
+    thead.cells[5].textContent='Estado'
+    thead.cells[6].textContent='Turno'
+  } else {
+    thead.cells[5].textContent='Prioridad'
+    thead.cells[6].textContent='Alerta'
+  }
 
-            tbody.innerHTML = data.map(item => {
-                const f = item.fecha ? item.fecha.split('T')[0].split('-').reverse().join('/') : '-';
-                const prio   = (item.prioridad || 'Baja').toUpperCase();
-                const estado = item.estado.toUpperCase();
-                let statusClass = 'status-importante';
-                if (estado === 'PENDIENTE') statusClass = 'status-atencion';
+  document.getElementById('tbody').innerHTML=fuente.map((f,i)=>{
+    const p=f.parsed
+    const obCls=i===0?'ob-1':i===1?'ob-2':'ob-n'
 
-                return `
-                <tr class="border-t border-ocasa-border hover:bg-ocasa-surface-alt/50 transition-colors">
-                    <td class="p-4 text-[10px] font-bold text-ocasa-text-3 whitespace-nowrap">${f}</td>
-                    <td class="p-4 font-black text-ocasa-text-1">${item.remito}</td>
-                    <td class="p-4 text-ocasa-text-2 font-bold italic text-sm">${item.tipo}</td>
-                    <td class="p-4">
-                        <span class="font-bold ${prio === 'ALTA' ? 'text-ocasa-danger' : 'text-ocasa-text-3'} text-[10px] uppercase">${prio}</span>
-                    </td>
-                    <td class="p-4 text-xs text-ocasa-text-2 max-w-[250px] break-words">${item.descripcion || '-'}</td>
-                    <td class="p-4 text-[11px] italic text-ocasa-text-3 max-w-[250px] break-words">${item.resolucion || '-'}</td>
-                    <td class="p-4 text-right">
-                        <span class="px-3 py-1.5 ${statusClass} rounded font-black uppercase text-[10px]" style="border-radius:var(--ocasa-radius-sm);letter-spacing:0.05em;">
-                            ${item.estado}
-                        </span>
-                    </td>
-                </tr>`;
-            }).join('');
-        }
+    let turnoHTML='<span style="color:var(--muted);font-size:11px">Sin turno</span>'
+    if (p.horaTexto) {
+      turnoHTML=`<div class="hora-badge">${p.horaTexto} hs</div>`
+      if (p.codigo) turnoHTML+=`<div class="cod-text">${p.codigo}</div>`
+    } else if (p.codigo) {
+      turnoHTML=`<div class="cod-text" style="font-size:12px">${p.codigo}</div>`
+    } else if (f.turnoRaw) {
+      turnoHTML=`<div class="cod-text" style="font-size:11px">${f.turnoRaw.substring(0,35)}</div>`
+    }
 
-        function filtrarTabla() {
-            const term = document.getElementById('searchTable').value.toLowerCase();
-            const filtrados = datosFull.filter(d =>
-                Object.values(d).some(val => val.toString().toLowerCase().includes(term))
-            );
-            renderizarTabla(filtrados);
-        }
+    if (esHistorial) {
+      // Vista historial: sin prioridad/alerta, muestra badge "Liberado"
+      return `<tr>
+        <td><span class="orden-badge ob-n">${i+1}</span></td>
+        <td><div class="c-name">${f.cliente||'—'}</div>${f.dep?`<div class="c-sub">${f.dep}</div>`:''}</td>
+        <td><div>${f.transporte||'—'}</div>${f.patente?`<div style="margin-top:3px"><span class="plate">${f.patente}</span></div>`:''}</td>
+        <td><span style="font-family:'DM Mono',monospace;font-size:12px">${f.nViaje||'—'}</span></td>
+        <td>${turnoHTML}</td>
+        <td><span class="liberado-badge">✓ Liberado</span></td>
+        <td>${turnoHTML}</td>
+        <td><span style="font-size:12px;color:var(--muted)">${f.darsena||'—'}</span></td>
+        <td><span style="font-family:'DM Mono',monospace;font-size:12px">${f.bultos||'—'}</span></td>
+        <td><span style="font-family:'DM Mono',monospace;font-size:12px">${f.pallets||'—'}</span></td>
+        <td><span style="font-size:11px;color:var(--muted)">${f.detalle||'—'}</span></td>
+      </tr>`
+    }
 
-        async function init() {
-            try {
-                const res = await fetch(WEB_APP_URL);
-                datosFull = await res.json();
-                showView('home');
-                lucide.createIcons();
-                setTimeout(procesarAlertas, 800);
-            } catch(e) { console.error("Error cargando datos"); }
-        }
-        init();
-    </script>
+    // Vista cola activa
+    const prCls=p.prioridad==='ALTA'?'pr-alta':p.prioridad==='MEDIA'?'pr-media':'pr-baja'
+    const prLabel=p.prioridad==='ALTA'?'Alta':p.prioridad==='MEDIA'?'Media':'Baja'
+
+    let alertaHTML='<span style="color:var(--muted)">—</span>'
+    if (f.alerta) {
+      alertaHTML=`<span class="al-dot al-${f.alerta.toLowerCase()}"></span>
+                  <span class="al-label ${f.alerta.toLowerCase()}">${f.alerta==='ROJO'?'Riesgo':f.alerta==='AMARILLO'?'Atención':'OK'}</span>`
+    }
+
+    const rowCls=p.prioridad==='ALTA'?'row-alta':p.prioridad==='MEDIA'?'row-media':''
+    return `<tr class="${rowCls}">
+      <td><span class="orden-badge ${obCls}">${i+1}</span></td>
+      <td><div class="c-name">${f.cliente||'—'}</div>${f.dep?`<div class="c-sub">${f.dep}</div>`:''}</td>
+      <td><div>${f.transporte||'—'}</div>${f.patente?`<div style="margin-top:3px"><span class="plate">${f.patente}</span></div>`:''}</td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:12px">${f.nViaje||'—'}</span></td>
+      <td>${turnoHTML}</td>
+      <td><span class="pr-badge ${prCls}">${prLabel}</span></td>
+      <td>${alertaHTML}</td>
+      <td><span style="font-size:12px;color:var(--muted)">${f.darsena||'—'}</span></td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:12px">${f.bultos||'—'}</span></td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:12px">${f.pallets||'—'}</span></td>
+      <td><span style="font-size:11px;color:var(--muted)">${f.detalle||'—'}</span></td>
+    </tr>`
+  }).join('')
+}
+
+function setFiltro(f,btn) {
+  filtroActivo=f
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'))
+  btn.classList.add('active')
+  renderTabla()
+}
+
+function setTab(t,btn) {
+  tabActivo=t
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'))
+  btn.classList.add('active')
+  renderTabla()
+}
+
+cargarDatos()
+setInterval(cargarDatos, 5*60*1000)
+</script>
 </body>
 </html>
