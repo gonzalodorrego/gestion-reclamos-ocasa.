@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -181,7 +182,7 @@
     </main>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxs6-28lVAXxzHRSCRVMijfUlJ7IWtImxlhatT1GNA4U3OLmx2A-E5eZXekfX1hrvxARQ/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz2WhJsXWOU9Md2aCd0ueGhydhzD6-a0Uf6rcUDc_7lLXdsJowuvvYKVxASIeSSyQQJgA/exec';
         let datosFull = [];
         let reclamosAtrasados = [];
         let chartInstances = {};
@@ -608,33 +609,207 @@
             else if (view === 'carga') {
                 title.innerText = "Nueva Carga";
                 frame.innerHTML = `
-                    <div class="max-w-xl mx-auto bg-white rounded-[2.5rem] shadow-xl p-8 border border-slate-100">
-                        <form id="formCarga" class="space-y-4">
-                            <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase italic ml-2">Tipo de reclamo</label>
-                                <select id="f-tipo" class="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 font-bold">
-                                    <option>Caja rota</option><option>Producto equivocado</option><option>No recibí producto</option>
-                                </select>
+                    <div class="max-w-2xl mx-auto space-y-4">
+
+                        <!-- Header card -->
+                        <div class="bg-ocasa-cyan rounded-[2rem] p-6 flex items-center gap-4 shadow-lg shadow-cyan-500/20">
+                            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                                <i data-lucide="file-plus" class="w-6 h-6 text-white"></i>
                             </div>
-                            <div class="space-y-1"><label class="text-[10px] font-black text-slate-400 uppercase italic ml-2">Remito</label>
-                                <input type="text" id="f-remito" required class="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 font-black outline-none">
+                            <div>
+                                <p class="text-white font-black text-lg uppercase tracking-tight">Nuevo Reclamo</p>
+                                <p class="text-cyan-100 text-xs font-bold">Completá todos los campos para registrar el caso</p>
                             </div>
-                            <button type="submit" class="w-full bg-ocasa-cyan text-white py-5 rounded-2xl font-black uppercase text-sm shadow-xl active:scale-95 transition-all mt-4 tracking-widest">Sincronizar Reclamo</button>
-                        </form>
+                        </div>
+
+                        <!-- Formulario -->
+                        <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-8">
+                            <form id="formCarga" class="space-y-5">
+
+                                <!-- Fila 1: Remito + Prioridad -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-slate-400 uppercase italic ml-1 tracking-widest">Remito / Guía *</label>
+                                        <input type="text" id="f-remito" required placeholder="Ej: 12345678"
+                                            class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 font-black text-slate-800 outline-none focus:border-ocasa-cyan focus:bg-white transition-all text-sm">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-slate-400 uppercase italic ml-1 tracking-widest">Prioridad *</label>
+                                        <select id="f-prioridad" required class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 font-bold text-slate-800 outline-none focus:border-ocasa-cyan transition-all text-sm appearance-none cursor-pointer">
+                                            <option value="">— Seleccionar —</option>
+                                            <option value="Alta">🔴 Alta</option>
+                                            <option value="Media">🟠 Media</option>
+                                            <option value="Baja">🟢 Baja</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Tipo de reclamo -->
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase italic ml-1 tracking-widest">Tipo de Reclamo *</label>
+                                    <select id="f-tipo" required class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 font-bold text-slate-800 outline-none focus:border-ocasa-cyan transition-all text-sm appearance-none cursor-pointer">
+                                        <option value="">— Seleccionar tipo —</option>
+                                        <option>Caja rota</option>
+                                        <option>Producto equivocado</option>
+                                        <option>No recibí producto</option>
+                                        <option>Color equivocado</option>
+                                        <option>Producto dañado</option>
+                                        <option>Demora en entrega</option>
+                                        <option>Otro</option>
+                                    </select>
+                                </div>
+
+                                <!-- Descripción -->
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase italic ml-1 tracking-widest">Descripción del problema *</label>
+                                    <textarea id="f-descripcion" required rows="4" placeholder="Describí el problema con el mayor detalle posible..."
+                                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 font-medium text-slate-800 outline-none focus:border-ocasa-cyan focus:bg-white transition-all text-sm resize-none"></textarea>
+                                </div>
+
+                                <!-- Resolución (opcional) -->
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase italic ml-1 tracking-widest">Resolución <span class="text-slate-300 normal-case not-italic font-bold">(opcional)</span></label>
+                                    <textarea id="f-resolucion" rows="3" placeholder="Si ya tiene resolución, indicala acá..."
+                                        class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 font-medium text-slate-800 outline-none focus:border-ocasa-cyan focus:bg-white transition-all text-sm resize-none"></textarea>
+                                
+                                    <!-- Bloque sugerencia bot -->
+                                    <div id="sugerenciaBox" class="hidden mt-2 p-4 rounded-2xl border border-cyan-200 bg-cyan-50">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="flex-1">
+                                                <p class="text-[9px] font-black text-cyan-600 uppercase italic tracking-widest mb-1 flex items-center gap-1">
+                                                    <i data-lucide="sparkles" class="w-3 h-3"></i> Sugerencia basada en historial
+                                                </p>
+                                                <p id="sugerenciaTexto" class="text-sm text-slate-700 font-medium leading-relaxed"></p>
+                                            </div>
+                                            <button type="button" onclick="usarSugerencia()" 
+                                                class="shrink-0 bg-ocasa-cyan text-white text-[10px] font-black uppercase px-3 py-2 rounded-xl active:scale-95 transition-all tracking-wider">
+                                                Usar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="sugerenciaCargando" class="hidden mt-2 p-3 rounded-2xl border border-slate-100 bg-slate-50 flex items-center gap-2">
+                                        <svg class="animate-spin w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                                        <span class="text-[11px] text-slate-400 font-bold italic">Buscando sugerencias...</span>
+                                    </div>
+                                </div>
+
+                                <!-- Estado -->
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase italic ml-1 tracking-widest">Estado inicial</label>
+                                    <div class="flex gap-3">
+                                        <label class="flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 border-orange-200 bg-orange-50 cursor-pointer has-[:checked]:border-orange-400 transition-all">
+                                            <input type="radio" name="f-estado" id="f-estado-pend" value="Pendiente" checked class="accent-orange-500">
+                                            <div>
+                                                <p class="text-[11px] font-black text-orange-600 uppercase">Pendiente</p>
+                                                <p class="text-[10px] text-orange-400 font-bold">Sin resolver</p>
+                                            </div>
+                                        </label>
+                                        <label class="flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 border-cyan-200 bg-cyan-50 cursor-pointer has-[:checked]:border-cyan-400 transition-all">
+                                            <input type="radio" name="f-estado" id="f-estado-fin" value="Finalizado" class="accent-cyan-600">
+                                            <div>
+                                                <p class="text-[11px] font-black text-ocasa-cyan uppercase">Finalizado</p>
+                                                <p class="text-[10px] text-cyan-400 font-bold">Resuelto</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Botón submit -->
+                                <button type="submit" id="btnSubmit"
+                                    class="w-full bg-ocasa-cyan text-white py-5 rounded-2xl font-black uppercase text-sm shadow-xl shadow-cyan-500/30 active:scale-95 transition-all tracking-widest flex items-center justify-center gap-3">
+                                    <i data-lucide="send" class="w-5 h-5"></i>
+                                    Sincronizar Reclamo
+                                </button>
+
+                            </form>
+                        </div>
                     </div>`;
-                
+
+                lucide.createIcons();
+
+                // Bot de sugerencias — debounce 700ms al escribir descripción
+                let sugerenciaTimer = null;
+                let sugerenciaActual = '';
+
+                function usarSugerencia() {
+                    document.getElementById('f-resolucion').value = sugerenciaActual;
+                    document.getElementById('sugerenciaBox').classList.add('hidden');
+                }
+                window.usarSugerencia = usarSugerencia;
+
+                async function pedirSugerencia(tipo, descripcion) {
+                    document.getElementById('sugerenciaBox').classList.add('hidden');
+                    document.getElementById('sugerenciaCargando').classList.remove('hidden');
+                    try {
+                        const res = await fetch(WEB_APP_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'sugerir', tipo, descripcion })
+                        });
+                        const data = await res.json();
+                        document.getElementById('sugerenciaCargando').classList.add('hidden');
+                        if (data.sugerencia) {
+                            sugerenciaActual = data.sugerencia;
+                            document.getElementById('sugerenciaTexto').innerText = data.sugerencia;
+                            document.getElementById('sugerenciaBox').classList.remove('hidden');
+                            lucide.createIcons();
+                        }
+                    } catch(err) {
+                        document.getElementById('sugerenciaCargando').classList.add('hidden');
+                    }
+                }
+
+                document.getElementById('f-descripcion').addEventListener('input', function() {
+                    clearTimeout(sugerenciaTimer);
+                    const desc = this.value.trim();
+                    const tipo = document.getElementById('f-tipo').value;
+                    if (desc.length < 15 || !tipo) return;
+                    sugerenciaTimer = setTimeout(() => pedirSugerencia(tipo, desc), 700);
+                });
+
+                document.getElementById('f-tipo').addEventListener('change', function() {
+                    const desc = document.getElementById('f-descripcion').value.trim();
+                    if (desc.length < 15) return;
+                    pedirSugerencia(this.value, desc);
+                });
+
                 document.getElementById('formCarga').addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    const btn = e.target.querySelector('button');
-                    btn.disabled = true; btn.innerText = "Enviando...";
+                    const btn = document.getElementById('btnSubmit');
+
+                    // Validaciones básicas
+                    const tipo = document.getElementById('f-tipo').value;
+                    const prioridad = document.getElementById('f-prioridad').value;
+                    const remito = document.getElementById('f-remito').value.trim();
+                    const descripcion = document.getElementById('f-descripcion').value.trim();
+                    const resolucion = document.getElementById('f-resolucion').value.trim();
+                    const estado = document.querySelector('input[name="f-estado"]:checked').value;
+
+                    if (!tipo || !prioridad || !remito || !descripcion) {
+                        alert('Completá todos los campos obligatorios (*)');
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    btn.innerHTML = `<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="white" stroke-width="4"></circle><path class="opacity-75" fill="white" d="M4 12a8 8 0 018-8v8z"></path></svg> Enviando...`;
+
                     const payload = {
-                        fecha: new Date().toLocaleString(),
-                        tipo: document.getElementById('f-tipo').value,
-                        remito: document.getElementById('f-remito').value,
-                        estado: "Pendiente", usuario: "Gonzalo Dorrego"
+                        fecha: new Date().toLocaleString('es-AR'),
+                        tipo,
+                        remito,
+                        descripcion,
+                        prioridad,
+                        resolucion,
+                        estado,
+                        usuario: "Gonzalo Dorrego"
                     };
+
                     await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                    alert("¡Cargado!");
-                    init();
+
+                    // Feedback visual
+                    btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> ¡Reclamo registrado!`;
+                    btn.classList.replace('bg-ocasa-cyan', 'bg-green-500');
+                    lucide.createIcons();
+                    setTimeout(() => { init(); }, 1200);
                 });
             }
 
@@ -777,4 +952,3 @@
     </script>
 </body>
 </html>
-
