@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -251,20 +250,28 @@
             datos.filter(item => item.estado === 'Pendiente').forEach(item => {
                 const diff = (ahora - new Date(item.fecha)) / (1000 * 60 * 60);
                 const max = slaMax[item.prioridad] || 72;
+                const color = colorPrioridad[item.prioridad] || '#ef4444';
 
-                let tipoAlerta = null;
-                let label = '';
-
-                if (diff >= max) {
-                    tipoAlerta = 'slaVencido';
-                    label = `SLA vencido — ${item.prioridad || '?'} (+${max}hs máx resolución)`;
-                } else if (diff >= 3) {
-                    tipoAlerta = 'sinRespuesta';
-                    label = `+3hs sin primera respuesta`;
+                // Alerta 1: +3hs sin primera respuesta (siempre, independiente del SLA)
+                if (diff >= 3) {
+                    reclamosAtrasados.push({
+                        ...item,
+                        tipoAlerta: 'sinRespuesta',
+                        label: '+3hs sin primera respuesta',
+                        horas: Math.round(diff),
+                        colorAlerta: '#64748b'
+                    });
                 }
 
-                if (tipoAlerta) {
-                    reclamosAtrasados.push({ ...item, tipoAlerta, label, horas: Math.round(diff), colorAlerta: colorPrioridad[item.prioridad] || '#ef4444' });
+                // Alerta 2: SLA de resolución vencido por prioridad
+                if (diff >= max) {
+                    reclamosAtrasados.push({
+                        ...item,
+                        tipoAlerta: 'slaVencido',
+                        label: `SLA vencido — ${item.prioridad || '?'} (+${max}hs máx resolución)`,
+                        horas: Math.round(diff),
+                        colorAlerta: color
+                    });
                 }
             });
 
@@ -713,10 +720,11 @@
                             <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
                                 <i data-lucide="file-plus" class="w-6 h-6 text-white"></i>
                             </div>
-                            <div>
+                            <div class="flex-1">
                                 <p class="text-white font-black text-lg uppercase tracking-tight">Nuevo Reclamo</p>
                                 <p class="text-cyan-100 text-xs font-bold">Completá todos los campos para registrar el caso</p>
                             </div>
+                            <span class="shrink-0 bg-white/20 text-white text-[11px] font-black uppercase px-3 py-1.5 rounded-xl tracking-widest border border-white/30">${naveActual}</span>
                         </div>
 
                         <!-- Formulario -->
@@ -897,6 +905,7 @@
                         prioridad,
                         resolucion,
                         estado,
+                        nave: naveActual,
                         usuario: "Gonzalo Dorrego"
                     };
 
