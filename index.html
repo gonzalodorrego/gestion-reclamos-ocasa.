@@ -145,6 +145,15 @@
             </div>
         </nav>
 
+        <div class="px-4 pb-2 border-t border-slate-100 pt-4">
+            <p class="text-[9px] font-black text-slate-400 uppercase italic tracking-widest ml-1 mb-1">Nave activa</p>
+            <select id="selectNave" onchange="cambiarNave(this.value)" class="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 font-black text-slate-800 outline-none text-sm cursor-pointer focus:border-ocasa-cyan transition-all appearance-none">
+                <option value="PL2">PL2</option>
+                <option value="PL3" selected>PL3</option>
+                <option value="PL5">PL5</option>
+            </select>
+        </div>
+
         <div class="p-6 border-t border-slate-100 flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-ocasa-cyan border border-slate-200 text-xs">GD</div>
             <div class="flex flex-col">
@@ -160,6 +169,7 @@
                 <button onclick="toggleSidebar()" class="md:hidden p-2 text-slate-600"><i data-lucide="menu"></i></button>
                 <span class="hidden md:block w-1.5 h-6 bg-ocasa-cyan rounded-full"></span>
                 <h2 id="viewTitle" class="text-sm md:text-lg font-black text-slate-800 uppercase italic tracking-tighter">Panel de Gestión</h2>
+                <span class="hidden md:inline-flex items-center px-2.5 py-1 bg-ocasa-cyan/10 text-ocasa-cyan text-[10px] font-black uppercase rounded-full border border-ocasa-cyan/20 tracking-wider" id="labelNaveActiva">PL3</span>
             </div>
             
             <div class="relative">
@@ -170,7 +180,7 @@
 
                 <div id="notifPanel">
                     <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center rounded-t-[24px]">
-                        <span class="text-[10px] font-black uppercase text-slate-400 italic">Alertas SLA (+24hs)</span>
+                        <span class="text-[10px] font-black uppercase text-slate-400 italic">Alertas SLA</span>
                         <span id="notifCount" class="bg-red-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold">0</span>
                     </div>
                     <div id="notifList" class="overflow-y-auto max-h-[350px] p-2 space-y-2"></div>
@@ -186,6 +196,23 @@
         let datosFull = [];
         let reclamosAtrasados = [];
         let chartInstances = {};
+        let naveActual = 'PL3';
+        let currentView = 'home';
+
+        function getDatosFiltrados() {
+            return datosFull.filter(d => {
+                const nave = (d.nave || d.Nave || '').toString().trim();
+                return !nave || nave === naveActual;
+            });
+        }
+
+        function cambiarNave(nave) {
+            naveActual = nave;
+            document.getElementById('labelNaveActiva').innerText = nave;
+            if (currentView === 'stats') renderStats();
+            else if (currentView === 'historico') showView('historico');
+            procesarAlertas();
+        }
 
         function destroyCharts() {
             Object.values(chartInstances).forEach(c => { try { c.destroy(); } catch(e){} });
@@ -214,11 +241,31 @@
         });
 
         function procesarAlertas() {
+            const datos = getDatosFiltrados();
             const ahora = new Date();
-            reclamosAtrasados = datosFull.filter(item => {
-                const fechaIngreso = new Date(item.fecha);
-                const diff = (ahora - fechaIngreso) / (1000 * 60 * 60);
-                return item.estado === 'Pendiente' && diff >= 24;
+            const slaMax = { 'Alta': 24, 'Media': 48, 'Baja': 72 };
+            const colorPrioridad = { 'Alta': '#ef4444', 'Media': '#f97316', 'Baja': '#16a34a' };
+
+            reclamosAtrasados = [];
+
+            datos.filter(item => item.estado === 'Pendiente').forEach(item => {
+                const diff = (ahora - new Date(item.fecha)) / (1000 * 60 * 60);
+                const max = slaMax[item.prioridad] || 72;
+
+                let tipoAlerta = null;
+                let label = '';
+
+                if (diff >= max) {
+                    tipoAlerta = 'slaVencido';
+                    label = `SLA vencido — ${item.prioridad || '?'} (+${max}hs máx resolución)`;
+                } else if (diff >= 3) {
+                    tipoAlerta = 'sinRespuesta';
+                    label = `+3hs sin primera respuesta`;
+                }
+
+                if (tipoAlerta) {
+                    reclamosAtrasados.push({ ...item, tipoAlerta, label, horas: Math.round(diff), colorAlerta: colorPrioridad[item.prioridad] || '#ef4444' });
+                }
             });
 
             const badge = document.getElementById('badgeNotif');
@@ -232,11 +279,12 @@
                 wrapper.classList.add('animate-bell');
                 count.innerText = reclamosAtrasados.length;
                 list.innerHTML = reclamosAtrasados.map(r => `
-                    <div class="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm border-l-4 border-l-red-500">
-                        <p class="text-[11px] font-black text-slate-800 uppercase italic">${r.tipo}</p>
+                    <div class="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm" style="border-left: 4px solid ${r.colorAlerta}">
+                        <p class="text-[11px] font-black text-slate-800 uppercase italic">${r.tipo || '—'}</p>
                         <p class="text-[10px] text-slate-400 font-bold mt-1">Guía: ${r.remito}</p>
+                        <p class="text-[9px] font-black uppercase italic mt-1" style="color:${r.colorAlerta}">${r.label}</p>
                         <div class="flex justify-between items-center mt-3">
-                            <span class="text-[9px] text-red-500 font-bold uppercase italic">Vencido</span>
+                            <span class="text-[9px] text-slate-400 font-bold">${r.horas}hs transcurridas</span>
                             <button onclick="verReclamo('${r.remito}')" class="bg-slate-900 text-white text-[9px] px-3 py-1.5 rounded-lg font-black uppercase">Ver</button>
                         </div>
                     </div>`).join('');
@@ -256,14 +304,15 @@
            PROCESAR DATOS PARA ESTADÍSTICAS
         =================================================== */
         function procesarDatosStats() {
-            const total = datosFull.length;
-            const pendientes = datosFull.filter(d => d.estado === 'Pendiente').length;
+            const datos = getDatosFiltrados();
+            const total = datos.length;
+            const pendientes = datos.filter(d => d.estado === 'Pendiente').length;
             const resueltos = total - pendientes;
             const tasaResolucion = total > 0 ? Math.round((resueltos / total) * 100) : 0;
 
             // Por tipo
             const porTipo = {};
-            datosFull.forEach(d => { porTipo[d.tipo] = (porTipo[d.tipo] || 0) + 1; });
+            datos.forEach(d => { porTipo[d.tipo] = (porTipo[d.tipo] || 0) + 1; });
 
             // Últimos 7 días
             const porFecha = {};
@@ -274,22 +323,38 @@
                 const key = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
                 porFecha[key] = 0;
             }
-            datosFull.forEach(d => {
+            datos.forEach(d => {
                 if (!d.fecha) return;
                 const fecha = new Date(d.fecha);
                 const key = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
                 if (porFecha[key] !== undefined) porFecha[key]++;
             });
 
-            // SLA: vencidos (>24hs pendientes)
+            // SLA por prioridad
             const ahora = new Date();
-            const vencidos = datosFull.filter(d => {
+            const calcSLA = (prioridad, maxHoras) => {
+                const grupo = datos.filter(d => (d.prioridad || d.Prioridad || '') === prioridad);
+                const tot = grupo.length;
+                const aTiempo = grupo.filter(d => {
+                    if ((d.estado || d.Estado || '') === 'Finalizado') return true;
+                    const diff = (ahora - new Date(d.fecha)) / (1000 * 60 * 60);
+                    return diff < maxHoras;
+                }).length;
+                const pct = tot > 0 ? Math.round((aTiempo / tot) * 100) : 100;
+                return { total: tot, aTiempo, pct };
+            };
+            const slaAlta  = calcSLA('Alta',  24);
+            const slaMedia = calcSLA('Media', 48);
+            const slaBaja  = calcSLA('Baja',  72);
+
+            // SLA vencidos (para referencia interna)
+            const vencidos = datos.filter(d => {
                 if (d.estado !== 'Pendiente') return false;
                 const diff = (ahora - new Date(d.fecha)) / (1000 * 60 * 60);
                 return diff >= 24;
             }).length;
 
-            return { total, pendientes, resueltos, tasaResolucion, porTipo, porFecha, vencidos };
+            return { total, pendientes, resueltos, tasaResolucion, porTipo, porFecha, vencidos, slaAlta, slaMedia, slaBaja };
         }
 
         /* ===================================================
@@ -297,7 +362,7 @@
         =================================================== */
         function renderStats() {
             destroyCharts();
-            const { total, pendientes, resueltos, tasaResolucion, porTipo, porFecha, vencidos } = procesarDatosStats();
+            const { total, pendientes, resueltos, tasaResolucion, porTipo, porFecha, vencidos, slaAlta, slaMedia, slaBaja } = procesarDatosStats();
 
             const tipoLabels = Object.keys(porTipo);
             const tipoValues = Object.values(porTipo);
@@ -321,10 +386,12 @@
 
                 <!-- Fila de KPIs -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="kpi-card">
+                    <div class="kpi-card clickable" onclick="showView('historico')">
                         <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 italic mb-3">Total Histórico</p>
                         <p class="kpi-value text-5xl font-black text-slate-800 tracking-tighter leading-none">${total}</p>
-                        <p class="text-[10px] text-slate-400 font-bold mt-2 uppercase">Reclamos</p>
+                        <p class="text-[10px] text-slate-400 font-bold mt-2 uppercase flex items-center gap-1">
+                            Ver todos <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </p>
                     </div>
                     <div class="kpi-card clickable" onclick="showView('historico','Pendiente')">
                         <p class="text-[9px] font-black uppercase tracking-widest italic mb-3" style="color:${ORANGE}">Pendientes</p>
@@ -333,15 +400,44 @@
                             Ver detalle <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                         </p>
                     </div>
-                    <div class="kpi-card">
+                    <div class="kpi-card clickable" onclick="showView('historico','Finalizado')">
                         <p class="text-[9px] font-black uppercase tracking-widest italic mb-3" style="color:${CYAN}">Resueltos</p>
                         <p class="kpi-value text-5xl font-black tracking-tighter leading-none" style="color:${CYAN}">${resueltos}</p>
-                        <p class="text-[10px] font-bold mt-2 uppercase" style="color:${CYAN}">Cerrados</p>
+                        <p class="text-[10px] font-bold mt-2 uppercase flex items-center gap-1" style="color:${CYAN}">
+                            Ver detalle <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </p>
                     </div>
-                    <div class="kpi-card ${vencidos > 0 ? 'border-red-100' : ''}">
-                        <p class="text-[9px] font-black uppercase tracking-widest italic mb-3" style="color:${vencidos > 0 ? RED : SLATE}">SLA Vencidos</p>
-                        <p class="kpi-value text-5xl font-black tracking-tighter leading-none" style="color:${vencidos > 0 ? RED : SLATE}">${vencidos}</p>
-                        <p class="text-[10px] font-bold mt-2 uppercase" style="color:${vencidos > 0 ? RED : SLATE}">+24hs sin resolver</p>
+                    <div class="kpi-card">
+                        <p class="text-[9px] font-black uppercase tracking-widest italic mb-3 text-slate-400">SLA Cumplimiento</p>
+                        <div class="space-y-2.5">
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[9px] font-black uppercase tracking-wider" style="color:#ef4444">Alta (24hs)</span>
+                                    <span class="text-xs font-black" style="color:#ef4444">${slaAlta.pct}%</span>
+                                </div>
+                                <div style="height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
+                                    <div style="height:100%;background:#ef4444;width:${slaAlta.pct}%;border-radius:99px;transition:width 1s ease;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[9px] font-black uppercase tracking-wider" style="color:#f97316">Media (48hs)</span>
+                                    <span class="text-xs font-black" style="color:#f97316">${slaMedia.pct}%</span>
+                                </div>
+                                <div style="height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
+                                    <div style="height:100%;background:#f97316;width:${slaMedia.pct}%;border-radius:99px;transition:width 1s ease;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[9px] font-black uppercase tracking-wider" style="color:#16a34a">Baja (72hs)</span>
+                                    <span class="text-xs font-black" style="color:#16a34a">${slaBaja.pct}%</span>
+                                </div>
+                                <div style="height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
+                                    <div style="height:100%;background:#16a34a;width:${slaBaja.pct}%;border-radius:99px;transition:width 1s ease;"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -593,6 +689,7 @@
 
         async function showView(view, filter = null) {
             destroyCharts();
+            currentView = view;
             const frame = document.getElementById('contentFrame');
             const title = document.getElementById('viewTitle');
             frame.className = "flex-1 overflow-y-auto p-4 md:p-10";
@@ -856,12 +953,15 @@
                         </div>
                     </div>`;
                 
-                let data = datosFull;
+                let data = getDatosFiltrados();
                 if (filter === 'Pendiente') {
-                    data = datosFull.filter(d => d.estado === 'Pendiente');
+                    data = data.filter(d => (d.estado || d.Estado || '') === 'Pendiente');
                     document.getElementById('filterEstado').value = 'Pendiente';
+                } else if (filter === 'Finalizado') {
+                    data = data.filter(d => (d.estado || d.Estado || '') === 'Finalizado');
+                    document.getElementById('filterEstado').value = 'Finalizado';
                 } else if (filter) {
-                    data = datosFull.filter(d => d.remito == filter);
+                    data = data.filter(d => d.remito == filter || d.Remito == filter);
                 }
                 renderizarTabla(data);
             }
@@ -922,18 +1022,21 @@
         }
 
         function filtrarTabla() {
-            const term = (document.getElementById('searchTable')?.value || '').toLowerCase();
+            const term = (document.getElementById('searchTable')?.value || '').toLowerCase().trim();
             const estado = document.getElementById('filterEstado')?.value || '';
             const prioridad = document.getElementById('filterPrioridad')?.value || '';
-            const filtrados = datosFull.filter(d => {
-                const matchText = !term ||
-                    (d.remito || '').toLowerCase().includes(term) ||
-                    (d.tipo || '').toLowerCase().includes(term) ||
-                    (d.descripcion || '').toLowerCase().includes(term);
-                const matchEstado = !estado || d.estado === estado;
-                const matchPrioridad = !prioridad || d.prioridad === prioridad;
-                // Si hay filtro activo de notificación (remito específico)
-                const matchActive = !activeFilter || activeFilter === 'Pendiente' || d.remito == activeFilter;
+            const base = getDatosFiltrados();
+            const filtrados = base.filter(d => {
+                const remito      = (d.remito      || d.Remito      || '').toString().toLowerCase();
+                const tipo        = (d.tipo        || d.Tipo        || '').toLowerCase();
+                const descripcion = (d.descripcion || d.Descripcion || '').toLowerCase();
+                const dEstado     = (d.estado      || d.Estado      || '');
+                const dPrioridad  = (d.prioridad   || d.Prioridad   || '');
+
+                const matchText      = !term || remito.includes(term) || tipo.includes(term) || descripcion.includes(term);
+                const matchEstado    = !estado    || dEstado    === estado;
+                const matchPrioridad = !prioridad || dPrioridad === prioridad;
+                const matchActive    = !activeFilter || activeFilter === 'Pendiente' || activeFilter === 'Finalizado' || d.remito == activeFilter || d.Remito == activeFilter;
                 return matchText && matchEstado && matchPrioridad && matchActive;
             });
             renderizarTabla(filtrados);
