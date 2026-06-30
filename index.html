@@ -201,7 +201,8 @@
         function getDatosFiltrados() {
             return datosFull.filter(d => {
                 const nave = (d.nave || d.Nave || '').toString().trim();
-                return !nave || nave === naveActual;
+                const naveEfectiva = nave || 'PL3'; // registros sin nave son PL3 (datos históricos)
+                return naveEfectiva === naveActual;
             });
         }
 
@@ -760,6 +761,8 @@
                                         <option>Color equivocado</option>
                                         <option>Producto dañado</option>
                                         <option>Demora en entrega</option>
+                                        <option>RMA / Pedido cancelado</option>
+                                        <option>Solicitud de documentación</option>
                                         <option>Otro</option>
                                     </select>
                                 </div>
