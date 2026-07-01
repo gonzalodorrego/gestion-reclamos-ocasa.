@@ -267,6 +267,8 @@
             statsVista = vista;
             renderStats();
         }
+
+        function procesarAlertas() {
             const datos = getDatosFiltrados();
             const ahora = new Date();
             const slaMax = { 'Alta': 24, 'Media': 48, 'Baja': 72 };
@@ -420,20 +422,20 @@
 
             const frame = document.getElementById('contentFrame');
 
-            frame.innerHTML = `
-            <div class="max-w-6xl mx-auto space-y-6 pb-8">
-
             const mesesDisponibles = [...new Set(datosFull.map(d => {
                 if (!d.fecha) return null;
                 const f = new Date(d.fecha);
                 if (isNaN(f)) return null;
-                return `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`;
+                const mm = String(f.getMonth()+1).padStart(2,'0');
+                return f.getFullYear() + '-' + mm;
             }).filter(Boolean))].sort().reverse();
 
             const mesOpts = mesesDisponibles.map(m => {
-                const [y, mo] = m.split('-');
-                const label = new Date(y, mo-1).toLocaleString('es-AR', {month:'long', year:'numeric'});
-                return `<option value="${m}" ${mesStats===m?'selected':''}>${label.charAt(0).toUpperCase()+label.slice(1)}</option>`;
+                const parts = m.split('-');
+                const label = new Date(parts[0], parts[1]-1).toLocaleString('es-AR', {month:'long', year:'numeric'});
+                const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
+                const sel = mesStats === m ? 'selected' : '';
+                return '<option value="' + m + '" ' + sel + '>' + labelCap + '</option>';
             }).join('');
 
             frame.innerHTML = `
@@ -447,7 +449,7 @@
                         <button onclick="cambiarStatsVista('PL3')" class="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${statsVista==='PL3'?'bg-ocasa-cyan text-white':'bg-white text-slate-500 border border-slate-200 hover:border-ocasa-cyan'}">PL3</button>
                     </div>
                     <select onchange="mesStats=this.value;renderStats()" class="p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase outline-none text-slate-700 cursor-pointer">
-                        <option value="" ${!mesStats?'selected':''}>Todos los meses</option>
+                        <option value="" ${!mesStats ? 'selected' : ''}>Todos los meses</option>
                         ${mesOpts}
                     </select>
                 </div>
