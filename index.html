@@ -149,7 +149,6 @@
             <select id="selectNave" onchange="cambiarNave(this.value)" class="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 font-black text-slate-800 outline-none text-sm cursor-pointer focus:border-ocasa-cyan transition-all appearance-none">
                 <option value="PL2">PL2</option>
                 <option value="PL3" selected>PL3</option>
-                <option value="PL5">PL5</option>
             </select>
         </div>
 
@@ -197,13 +196,37 @@
         let chartInstances = {};
         let naveActual = 'PL3';
         let currentView = 'home';
+        let statsVista = 'global'; // 'global' | 'PL2' | 'PL3'
+        let mesStats = ''; // '' = todos, 'YYYY-MM' = mes puntual
 
-        function getDatosFiltrados() {
+        function getDatosFiltrados(forzarNave) {
+            const nave = forzarNave || naveActual;
             return datosFull.filter(d => {
-                const nave = (d.nave || d.Nave || '').toString().trim();
-                const naveEfectiva = nave || 'PL3'; // registros sin nave son PL3 (datos históricos)
-                return naveEfectiva === naveActual;
+                const dn = (d.nave || d.Nave || '').toString().trim();
+                const naveEfectiva = dn || 'PL3';
+                return naveEfectiva === nave;
             });
+        }
+
+        function getDatosStats() {
+            let base;
+            if (statsVista === 'global') {
+                base = datosFull.filter(d => {
+                    const dn = (d.nave || d.Nave || '').toString().trim();
+                    return !dn || dn === 'PL2' || dn === 'PL3';
+                });
+            } else {
+                base = getDatosFiltrados(statsVista);
+            }
+            if (mesStats) {
+                base = base.filter(d => {
+                    if (!d.fecha) return false;
+                    const fecha = new Date(d.fecha);
+                    const ym = `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}`;
+                    return ym === mesStats;
+                });
+            }
+            return base;
         }
 
         function cambiarNave(nave) {
@@ -240,7 +263,10 @@
             }
         });
 
-        function procesarAlertas() {
+        function cambiarStatsVista(vista) {
+            statsVista = vista;
+            renderStats();
+        }
             const datos = getDatosFiltrados();
             const ahora = new Date();
             const slaMax = { 'Alta': 24, 'Media': 48, 'Baja': 72 };
@@ -312,7 +338,7 @@
            PROCESAR DATOS PARA ESTADÍSTICAS
         =================================================== */
         function procesarDatosStats() {
-            const datos = getDatosFiltrados();
+            const datos = getDatosStats();
             const total = datos.length;
             const pendientes = datos.filter(d => d.estado === 'Pendiente').length;
             const resueltos = total - pendientes;
@@ -322,21 +348,28 @@
             const porTipo = {};
             datos.forEach(d => { porTipo[d.tipo] = (porTipo[d.tipo] || 0) + 1; });
 
-            // Últimos 7 días
-            const porFecha = {};
-            const hoy = new Date();
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date(hoy);
-                d.setDate(hoy.getDate() - i);
-                const key = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
-                porFecha[key] = 0;
-            }
+            // Por día (todos los datos, agrupado por día para el gráfico mensual)
+            const porDia = {};
             datos.forEach(d => {
                 if (!d.fecha) return;
                 const fecha = new Date(d.fecha);
+                if (isNaN(fecha)) return;
                 const key = fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
-                if (porFecha[key] !== undefined) porFecha[key]++;
+                const mesKey = `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}`;
+                porDia[key] = { count: (porDia[key]?.count || 0) + 1, mes: mesKey };
             });
+            // Ordenar cronológicamente
+            const diasOrdenados = Object.entries(porDia).sort((a, b) => {
+                const [da, ma] = a[0].split('/').map(Number);
+                const [db, mb] = b[0].split('/').map(Number);
+                // simple sort por mes luego día
+                if (ma !== mb) return ma - mb;
+                return da - db;
+            });
+            const porFecha = Object.fromEntries(diasOrdenados.map(([k,v]) => [k, v.count]));
+            const mesesDelGrafico = diasOrdenados.map(([k,v]) => v.mes);
+            const fechaLabels = Object.keys(porFecha);
+            const fechaValues = Object.values(porFecha);
 
             // SLA por prioridad
             const ahora = new Date();
@@ -362,7 +395,7 @@
                 return diff >= 24;
             }).length;
 
-            return { total, pendientes, resueltos, tasaResolucion, porTipo, porFecha, vencidos, slaAlta, slaMedia, slaBaja };
+            return { total, pendientes, resueltos, tasaResolucion, porTipo, porFecha, fechaLabels, fechaValues, mesesDelGrafico, vencidos, slaAlta, slaMedia, slaBaja };
         }
 
         /* ===================================================
@@ -370,12 +403,10 @@
         =================================================== */
         function renderStats() {
             destroyCharts();
-            const { total, pendientes, resueltos, tasaResolucion, porTipo, porFecha, vencidos, slaAlta, slaMedia, slaBaja } = procesarDatosStats();
+            const { total, pendientes, resueltos, tasaResolucion, porTipo, porFecha, fechaLabels, fechaValues, mesesDelGrafico, vencidos, slaAlta, slaMedia, slaBaja } = procesarDatosStats();
 
             const tipoLabels = Object.keys(porTipo);
             const tipoValues = Object.values(porTipo);
-            const fechaLabels = Object.keys(porFecha);
-            const fechaValues = Object.values(porFecha);
 
             const CYAN = '#0097A7';
             const CYAN_LIGHT = '#e0f4f6';
@@ -391,6 +422,35 @@
 
             frame.innerHTML = `
             <div class="max-w-6xl mx-auto space-y-6 pb-8">
+
+            const mesesDisponibles = [...new Set(datosFull.map(d => {
+                if (!d.fecha) return null;
+                const f = new Date(d.fecha);
+                if (isNaN(f)) return null;
+                return `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`;
+            }).filter(Boolean))].sort().reverse();
+
+            const mesOpts = mesesDisponibles.map(m => {
+                const [y, mo] = m.split('-');
+                const label = new Date(y, mo-1).toLocaleString('es-AR', {month:'long', year:'numeric'});
+                return `<option value="${m}" ${mesStats===m?'selected':''}>${label.charAt(0).toUpperCase()+label.slice(1)}</option>`;
+            }).join('');
+
+            frame.innerHTML = `
+            <div class="max-w-6xl mx-auto space-y-6 pb-8">
+
+                <!-- Selector de mes + tabs nave -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex gap-2">
+                        <button onclick="cambiarStatsVista('global')" class="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${statsVista==='global'?'bg-slate-800 text-white':'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'}">Global</button>
+                        <button onclick="cambiarStatsVista('PL2')" class="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${statsVista==='PL2'?'bg-ocasa-cyan text-white':'bg-white text-slate-500 border border-slate-200 hover:border-ocasa-cyan'}">PL2</button>
+                        <button onclick="cambiarStatsVista('PL3')" class="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${statsVista==='PL3'?'bg-ocasa-cyan text-white':'bg-white text-slate-500 border border-slate-200 hover:border-ocasa-cyan'}">PL3</button>
+                    </div>
+                    <select onchange="mesStats=this.value;renderStats()" class="p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase outline-none text-slate-700 cursor-pointer">
+                        <option value="" ${!mesStats?'selected':''}>Todos los meses</option>
+                        ${mesOpts}
+                    </select>
+                </div>
 
                 <!-- Fila de KPIs -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -418,27 +478,27 @@
                     <div class="kpi-card">
                         <p class="text-[9px] font-black uppercase tracking-widest italic mb-3 text-slate-400">SLA Cumplimiento</p>
                         <div class="space-y-2.5">
-                            <div>
+                            <div class="cursor-pointer" onclick="showView('historico','prioridad:Alta')">
                                 <div class="flex justify-between items-center mb-1">
-                                    <span class="text-[9px] font-black uppercase tracking-wider" style="color:#ef4444">Alta (24hs)</span>
+                                    <span class="text-[9px] font-black uppercase tracking-wider hover:underline" style="color:#ef4444">Alta (24hs)</span>
                                     <span class="text-xs font-black" style="color:#ef4444">${slaAlta.pct}%</span>
                                 </div>
                                 <div style="height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
                                     <div style="height:100%;background:#ef4444;width:${slaAlta.pct}%;border-radius:99px;transition:width 1s ease;"></div>
                                 </div>
                             </div>
-                            <div>
+                            <div class="cursor-pointer" onclick="showView('historico','prioridad:Media')">
                                 <div class="flex justify-between items-center mb-1">
-                                    <span class="text-[9px] font-black uppercase tracking-wider" style="color:#f97316">Media (48hs)</span>
+                                    <span class="text-[9px] font-black uppercase tracking-wider hover:underline" style="color:#f97316">Media (48hs)</span>
                                     <span class="text-xs font-black" style="color:#f97316">${slaMedia.pct}%</span>
                                 </div>
                                 <div style="height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
                                     <div style="height:100%;background:#f97316;width:${slaMedia.pct}%;border-radius:99px;transition:width 1s ease;"></div>
                                 </div>
                             </div>
-                            <div>
+                            <div class="cursor-pointer" onclick="showView('historico','prioridad:Baja')">
                                 <div class="flex justify-between items-center mb-1">
-                                    <span class="text-[9px] font-black uppercase tracking-wider" style="color:#16a34a">Baja (72hs)</span>
+                                    <span class="text-[9px] font-black uppercase tracking-wider hover:underline" style="color:#16a34a">Baja (72hs)</span>
                                     <span class="text-xs font-black" style="color:#16a34a">${slaBaja.pct}%</span>
                                 </div>
                                 <div style="height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
@@ -496,19 +556,20 @@
                     </div>
                 </div>
 
-                <!-- Línea temporal: últimos 7 días -->
+                <!-- Línea temporal: por mes -->
                 <div class="chart-card">
                     <div class="flex items-start justify-between mb-4">
                         <div>
                             <p class="chart-title">Tendencia</p>
-                            <p class="chart-subtitle">Reclamos ingresados — últimos 7 días</p>
+                            <p class="chart-subtitle">Reclamos ingresados por día (agrupados por mes)</p>
                         </div>
-                        <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase italic">
-                            <span class="stat-legend-dot" style="background:${CYAN}"></span> Ingresos diarios
+                        <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase italic">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm inline-block" style="background:${CYAN};opacity:0.7"></span> Reclamos/día</span>
+                            <span class="flex items-center gap-1.5"><span class="w-5 h-0.5 inline-block" style="background:#f97316"></span> Tendencia</span>
                         </div>
                     </div>
-                    <div style="position:relative;width:100%;height:220px;">
-                        <canvas id="chartLine" role="img" aria-label="Gráfico de línea: reclamos por día en los últimos 7 días">${fechaLabels.map((l,i)=>l+': '+fechaValues[i]).join(', ')}</canvas>
+                    <div style="position:relative;width:100%;height:260px;">
+                        <canvas id="chartLine" role="img" aria-label="Gráfico de barras y tendencia: reclamos por día agrupados por mes">${fechaLabels.map((l,i)=>l+': '+fechaValues[i]).join(', ')}</canvas>
                     </div>
                 </div>
 
@@ -639,25 +700,53 @@
 
             // Chart: línea temporal
             const ctxLine = document.getElementById('chartLine');
-            if (ctxLine) {
+            if (ctxLine && fechaLabels.length > 0) {
+                const n = fechaValues.length;
+                const sumX = fechaValues.reduce((a,_,i) => a+i, 0);
+                const sumY = fechaValues.reduce((a,v) => a+v, 0);
+                const sumXY = fechaValues.reduce((a,v,i) => a+i*v, 0);
+                const sumX2 = fechaValues.reduce((a,_,i) => a+i*i, 0);
+                const slope = n > 1 ? (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX) : 0;
+                const intercept = (sumY - slope*sumX) / n;
+                const trendData = fechaValues.map((_, i) => Math.max(0, parseFloat((intercept + slope*i).toFixed(2))));
+
+                const xLabels = fechaLabels.map((label, i) => {
+                    const mes = mesesDelGrafico[i];
+                    const prevMes = i > 0 ? mesesDelGrafico[i-1] : null;
+                    if (mes !== prevMes) {
+                        const [y, m] = mes.split('-');
+                        return new Date(y, m-1).toLocaleString('es-AR', { month: 'long' }).replace(/^\w/, c => c.toUpperCase());
+                    }
+                    return '';
+                });
+
                 chartInstances.line = new Chart(ctxLine, {
-                    type: 'line',
+                    type: 'bar',
                     data: {
-                        labels: fechaLabels,
-                        datasets: [{
-                            label: 'Reclamos',
-                            data: fechaValues,
-                            borderColor: CYAN,
-                            backgroundColor: CYAN_LIGHT,
-                            borderWidth: 2.5,
-                            pointRadius: 5,
-                            pointHoverRadius: 7,
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: CYAN,
-                            pointBorderWidth: 2.5,
-                            tension: 0.4,
-                            fill: true
-                        }]
+                        labels: xLabels,
+                        datasets: [
+                            {
+                                type: 'bar',
+                                label: 'Reclamos por dia',
+                                data: fechaValues,
+                                backgroundColor: '#0097A7AA',
+                                borderColor: '#0097A7',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                order: 2
+                            },
+                            {
+                                type: 'line',
+                                label: 'Tendencia',
+                                data: trendData,
+                                borderColor: '#f97316',
+                                borderWidth: 2.5,
+                                pointRadius: 0,
+                                tension: 0.4,
+                                fill: false,
+                                order: 1
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
@@ -665,7 +754,12 @@
                         plugins: {
                             legend: { display: false },
                             tooltip: {
-                                callbacks: { label: ctx => ` ${ctx.raw} reclamo${ctx.raw !== 1 ? 's' : ''}` }
+                                callbacks: {
+                                    title: (items) => fechaLabels[items[0].dataIndex],
+                                    label: ctx => ctx.dataset.label === 'Tendencia'
+                                        ? ` Tendencia: ${ctx.raw}`
+                                        : ` ${ctx.raw} reclamo${ctx.raw !== 1 ? 's' : ''}`
+                                }
                             }
                         },
                         scales: {
@@ -673,10 +767,18 @@
                                 grid: { display: false },
                                 ticks: {
                                     font: { size: 11, weight: '700' },
-                                    color: '#94a3b8',
-                                    autoSkip: false
+                                    color: '#475569',
+                                    autoSkip: false,
+                                    maxRotation: 0
                                 },
-                                border: { display: false }
+                                border: { display: false },
+                                title: {
+                                    display: true,
+                                    text: 'Mes',
+                                    color: '#94a3b8',
+                                    font: { size: 11, weight: '700' },
+                                    padding: { top: 8 }
+                                }
                             },
                             y: {
                                 grid: { color: '#f1f5f9' },
@@ -687,7 +789,14 @@
                                     callback: v => Number.isInteger(v) ? v : null
                                 },
                                 min: 0,
-                                border: { display: false }
+                                border: { display: false },
+                                title: {
+                                    display: true,
+                                    text: 'Cantidad de reclamos',
+                                    color: '#94a3b8',
+                                    font: { size: 11, weight: '700' },
+                                    padding: { bottom: 8 }
+                                }
                             }
                         }
                     }
@@ -804,12 +913,19 @@
                                 <!-- Estado -->
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black text-slate-400 uppercase italic ml-1 tracking-widest">Estado inicial</label>
-                                    <div class="flex gap-3">
+                                    <div class="flex gap-3 flex-wrap">
                                         <label class="flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 border-orange-200 bg-orange-50 cursor-pointer has-[:checked]:border-orange-400 transition-all">
                                             <input type="radio" name="f-estado" id="f-estado-pend" value="Pendiente" checked class="accent-orange-500">
                                             <div>
                                                 <p class="text-[11px] font-black text-orange-600 uppercase">Pendiente</p>
                                                 <p class="text-[10px] text-orange-400 font-bold">Sin resolver</p>
+                                            </div>
+                                        </label>
+                                        <label class="flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 border-violet-200 bg-violet-50 cursor-pointer has-[:checked]:border-violet-400 transition-all">
+                                            <input type="radio" name="f-estado" id="f-estado-hdr" value="HDR enviada al cliente" class="accent-violet-600">
+                                            <div>
+                                                <p class="text-[11px] font-black text-violet-600 uppercase">HDR enviada</p>
+                                                <p class="text-[10px] text-violet-400 font-bold">Esperando cliente</p>
                                             </div>
                                         </label>
                                         <label class="flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 border-cyan-200 bg-cyan-50 cursor-pointer has-[:checked]:border-cyan-400 transition-all">
@@ -933,6 +1049,7 @@
                                 <select id="filterEstado" onchange="filtrarTabla()" class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black uppercase outline-none text-slate-600">
                                     <option value="">Todos los estados</option>
                                     <option value="Pendiente">Pendiente</option>
+                                    <option value="HDR enviada al cliente">HDR enviada al cliente</option>
                                     <option value="Finalizado">Finalizado</option>
                                 </select>
                                 <select id="filterPrioridad" onchange="filtrarTabla()" class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black uppercase outline-none text-slate-600">
@@ -951,10 +1068,10 @@
                             <table class="w-full text-left" style="min-width:900px;">
                                 <thead class="bg-slate-50 text-[9px] font-black text-slate-400 uppercase italic tracking-widest">
                                     <tr>
-                                        <th class="px-5 py-4 whitespace-nowrap">Fecha</th>
+                                        <th class="px-5 py-4 whitespace-nowrap">Fecha de Reclamo</th>
                                         <th class="px-5 py-4 whitespace-nowrap">Remito</th>
-                                        <th class="px-5 py-4 whitespace-nowrap">Tipo</th>
-                                        <th class="px-5 py-4 whitespace-nowrap">Descripción</th>
+                                        <th class="px-5 py-4 whitespace-nowrap">Tipo de Reclamo</th>
+                                        <th class="px-5 py-4 whitespace-nowrap">Descripción del Reclamo</th>
                                         <th class="px-5 py-4 whitespace-nowrap">Prioridad</th>
                                         <th class="px-5 py-4 whitespace-nowrap">Resolución</th>
                                         <th class="px-5 py-4 whitespace-nowrap">Estado</th>
@@ -972,6 +1089,10 @@
                 } else if (filter === 'Finalizado') {
                     data = data.filter(d => (d.estado || d.Estado || '') === 'Finalizado');
                     document.getElementById('filterEstado').value = 'Finalizado';
+                } else if (filter && filter.startsWith('prioridad:')) {
+                    const p = filter.split(':')[1];
+                    data = data.filter(d => (d.prioridad || d.Prioridad || '') === p);
+                    document.getElementById('filterPrioridad').value = p;
                 } else if (filter) {
                     data = data.filter(d => d.remito == filter || d.Remito == filter);
                 }
@@ -1008,8 +1129,10 @@
         }
 
         function badgeEstado(e) {
-            const isPend = e === 'Pendiente';
-            return `<span class="px-2.5 py-1 ${isPend ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-cyan-50 border-cyan-200'} rounded-full text-[9px] font-black uppercase border tracking-wider" style="${isPend ? '' : 'color:#0097A7'}">${e || '—'}</span>`;
+            if (e === 'Pendiente')           return `<span class="px-2.5 py-1 bg-orange-50 text-orange-600 border-orange-200 rounded-full text-[9px] font-black uppercase border tracking-wider">Pendiente</span>`;
+            if (e === 'HDR enviada al cliente') return `<span class="px-2.5 py-1 bg-violet-50 text-violet-600 border-violet-200 rounded-full text-[9px] font-black uppercase border tracking-wider">HDR enviada al cliente</span>`;
+            if (e === 'Finalizado')          return `<span class="px-2.5 py-1 bg-cyan-50 border-cyan-200 rounded-full text-[9px] font-black uppercase border tracking-wider" style="color:#0097A7">Finalizado</span>`;
+            return `<span class="px-2.5 py-1 bg-slate-50 text-slate-500 border-slate-200 rounded-full text-[9px] font-black uppercase border tracking-wider">${e || '—'}</span>`;
         }
 
         function renderizarTabla(data) {
@@ -1042,13 +1165,23 @@
                 const remito      = (d.remito      || d.Remito      || '').toString().toLowerCase();
                 const tipo        = (d.tipo        || d.Tipo        || '').toLowerCase();
                 const descripcion = (d.descripcion || d.Descripcion || '').toLowerCase();
+                const dPrioridadStr = (d.prioridad || d.Prioridad || '').toLowerCase();
                 const dEstado     = (d.estado      || d.Estado      || '');
                 const dPrioridad  = (d.prioridad   || d.Prioridad   || '');
 
-                const matchText      = !term || remito.includes(term) || tipo.includes(term) || descripcion.includes(term);
+                const matchText      = !term || remito.includes(term) || tipo.includes(term) || descripcion.includes(term) || dPrioridadStr.includes(term);
                 const matchEstado    = !estado    || dEstado    === estado;
                 const matchPrioridad = !prioridad || dPrioridad === prioridad;
-                const matchActive    = !activeFilter || activeFilter === 'Pendiente' || activeFilter === 'Finalizado' || d.remito == activeFilter || d.Remito == activeFilter;
+
+                let matchActive = true;
+                if (activeFilter && activeFilter !== 'Pendiente' && activeFilter !== 'Finalizado') {
+                    if (activeFilter.startsWith('prioridad:')) {
+                        const p = activeFilter.split(':')[1];
+                        matchActive = dPrioridad === p;
+                    } else {
+                        matchActive = d.remito == activeFilter || d.Remito == activeFilter;
+                    }
+                }
                 return matchText && matchEstado && matchPrioridad && matchActive;
             });
             renderizarTabla(filtrados);
