@@ -1262,12 +1262,31 @@
 
         async function init() {
             try {
-                const res = await fetch(WEB_APP_URL);
-                datosFull = await res.json();
+                const frame = document.getElementById('contentFrame');
+                frame.innerHTML = '<div class="flex items-center justify-center h-full"><div class="text-center"><div class="w-10 h-10 border-4 border-ocasa-cyan border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="text-slate-400 text-sm font-bold">Cargando datos...</p></div></div>';
+
+                const res = await fetch(WEB_APP_URL, {
+                    method: 'GET',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const text = await res.text();
+                try {
+                    datosFull = JSON.parse(text);
+                } catch(parseErr) {
+                    console.error('Error parseando JSON:', text.substring(0, 200));
+                    frame.innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-red-500 font-bold text-sm">Error cargando datos. Verificá la conexión con el Script.</p></div>';
+                    return;
+                }
+
                 showView('home');
                 lucide.createIcons();
                 setTimeout(procesarAlertas, 800);
-            } catch (e) { console.error("Error cargando datos:", e); }
+            } catch (e) {
+                console.error('Error cargando datos:', e);
+                document.getElementById('contentFrame').innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-red-500 font-bold text-sm">Sin conexión al servidor. Verificá el Apps Script.</p></div>';
+            }
         }
         init();
     </script>
