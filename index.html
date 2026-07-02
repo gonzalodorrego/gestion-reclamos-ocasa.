@@ -461,7 +461,9 @@
             // Calcular min/max fechas disponibles en los datos
             const fechasDisp = datosFull.map(d => d.fecha ? new Date(d.fecha) : null).filter(f => f && !isNaN(f));
             const fechaMin = fechasDisp.length ? new Date(Math.min(...fechasDisp)).toISOString().split('T')[0] : '2026-01-01';
-            const fechaMax = '2026-07-02';
+            const hoyISO = new Date().toISOString().split('T')[0];
+            const fechaMaxData = fechasDisp.length ? new Date(Math.max(...fechasDisp)).toISOString().split('T')[0] : hoyISO;
+            const fechaMax = fechaMaxData > hoyISO ? fechaMaxData : hoyISO;
 
             frame.innerHTML = `
             <div class="max-w-6xl mx-auto space-y-6 pb-8">
