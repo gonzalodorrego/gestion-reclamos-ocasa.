@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1173,7 +1174,17 @@
             return `<span class="px-2.5 py-1 bg-slate-50 text-slate-500 border-slate-200 rounded-full text-[9px] font-black uppercase border tracking-wider">${e || '—'}</span>`;
         }
 
+        function convertirUrlDrive(url) {
+            // Convierte link de Drive /view a link de imagen directa
+            var match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (match) {
+                return 'https://drive.google.com/uc?export=view&id=' + match[1];
+            }
+            return url;
+        }
+
         function verEvidencia(url) {
+            url = convertirUrlDrive(url);
             const win = window.open('', '_blank');
             win.document.write(`<!DOCTYPE html>
 <html><head><title>Evidencia HDR</title>
