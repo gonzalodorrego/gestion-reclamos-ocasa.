@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1121,16 +1120,6 @@
                     </div>`;
                 
                 let data = getDatosFiltrados();
-                
-                // DEBUG temporal — muestra qué hay en memoria
-                const debugInfo = document.createElement('div');
-                debugInfo.style.cssText = 'background:#1e293b;color:#94a3b8;font-family:monospace;font-size:11px;padding:12px;border-radius:8px;margin-bottom:12px;';
-                debugInfo.innerHTML = 
-                    'datosFull: ' + datosFull.length + ' registros | ' +
-                    'naveActual: ' + naveActual + ' | ' +
-                    'getDatosFiltrados: ' + data.length + ' registros' +
-                    (datosFull.length > 0 ? ' | primer nave: "' + (datosFull[0].nave || datosFull[0].Nave || 'VACIO') + '"' : '');
-                document.getElementById('contentFrame').prepend(debugInfo);
 
                 if (filter === 'Pendiente') {
                     data = data.filter(d => (d.estado || d.Estado || '') === 'Pendiente');
