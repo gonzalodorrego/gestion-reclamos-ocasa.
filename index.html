@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1120,6 +1121,17 @@
                     </div>`;
                 
                 let data = getDatosFiltrados();
+                
+                // DEBUG temporal — muestra qué hay en memoria
+                const debugInfo = document.createElement('div');
+                debugInfo.style.cssText = 'background:#1e293b;color:#94a3b8;font-family:monospace;font-size:11px;padding:12px;border-radius:8px;margin-bottom:12px;';
+                debugInfo.innerHTML = 
+                    'datosFull: ' + datosFull.length + ' registros | ' +
+                    'naveActual: ' + naveActual + ' | ' +
+                    'getDatosFiltrados: ' + data.length + ' registros' +
+                    (datosFull.length > 0 ? ' | primer nave: "' + (datosFull[0].nave || datosFull[0].Nave || 'VACIO') + '"' : '');
+                document.getElementById('contentFrame').prepend(debugInfo);
+
                 if (filter === 'Pendiente') {
                     data = data.filter(d => (d.estado || d.Estado || '') === 'Pendiente');
                     document.getElementById('filterEstado').value = 'Pendiente';
@@ -1265,13 +1277,9 @@
                 const frame = document.getElementById('contentFrame');
                 frame.innerHTML = '<div class="flex items-center justify-center h-full"><div class="text-center"><div class="w-10 h-10 border-4 border-ocasa-cyan border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="text-slate-400 text-sm font-bold">Cargando datos...</p></div></div>';
 
-                const res = await fetch(WEB_APP_URL, {
-                    method: 'GET',
-                    redirect: 'follow',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
+                const res = await fetch(WEB_APP_URL);
                 const text = await res.text();
+
                 try {
                     datosFull = JSON.parse(text);
                 } catch(parseErr) {
