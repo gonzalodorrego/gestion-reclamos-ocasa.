@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -191,7 +190,7 @@
     </main>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz2WhJsXWOU9Md2aCd0ueGhydhzD6-a0Uf6rcUDc_7lLXdsJowuvvYKVxASIeSSyQQJgA/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyKTkddrMATy4AD5hyrtgx6X0FxKkAKTszWsKXiQVuJawASCABYAkkoFA8O1wcjPlJSTQ/exec';
         let datosFull = [];
         let reclamosAtrasados = [];
         let chartInstances = {};
@@ -1111,6 +1110,7 @@
                                         <th class="px-5 py-4 whitespace-nowrap">Descripción del Reclamo</th>
                                         <th class="px-5 py-4 whitespace-nowrap">Prioridad</th>
                                         <th class="px-5 py-4 whitespace-nowrap">Resolución</th>
+                                        <th class="px-5 py-4 whitespace-nowrap">Evidencia</th>
                                         <th class="px-5 py-4 whitespace-nowrap">Estado</th>
                                     </tr>
                                 </thead>
@@ -1172,25 +1172,61 @@
             return `<span class="px-2.5 py-1 bg-slate-50 text-slate-500 border-slate-200 rounded-full text-[9px] font-black uppercase border tracking-wider">${e || '—'}</span>`;
         }
 
+        function verEvidencia(url) {
+            const win = window.open('', '_blank');
+            win.document.write(`<!DOCTYPE html>
+<html><head><title>Evidencia HDR</title>
+<style>
+  body { margin: 0; background: #1e293b; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; }
+  .toolbar { position: fixed; top: 0; left: 0; right: 0; background: #0f172a; padding: 12px 20px; display: flex; justify-between; align-items: center; z-index: 10; }
+  .toolbar span { color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+  .btn { background: #0097A7; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; text-decoration: none; }
+  img { max-width: 90vw; max-height: 85vh; border-radius: 12px; box-shadow: 0 25px 60px rgba(0,0,0,0.5); margin-top: 60px; }
+  @media print { body { background: white; } .toolbar { display: none; } img { margin: 0; max-width: 100%; max-height: 100%; box-shadow: none; } }
+</style></head>
+<body>
+  <div class="toolbar">
+    <span>Evidencia HDR — OCASA</span>
+    <button class="btn" onclick="window.print()">Guardar como PDF</button>
+  </div>
+  <img src="${url}" onload="this.style.opacity=1" style="opacity:0;transition:opacity 0.3s" 
+       onerror="this.outerHTML='<div style=color:#ef4444;font-weight:bold;margin-top:60px>No se pudo cargar la imagen. Verificá el link en el Sheet.</div>'">
+</body></html>`);
+            win.document.close();
+        }
+
         function renderizarTabla(data) {
             const tbody = document.getElementById('tablaBody');
             if (!tbody) return;
             const contador = document.getElementById('contadorResultados');
-            if (contador) contador.innerText = `${data.length} resultado${data.length !== 1 ? 's' : ''}`;
+            if (contador) contador.innerText = data.length + ' resultado' + (data.length !== 1 ? 's' : '');
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-slate-400 text-xs font-bold italic">Sin resultados</td></tr>`;
+                tbody.innerHTML = '<tr><td colspan="8" class="p-10 text-center text-slate-400 text-xs font-bold italic">Sin resultados</td></tr>';
                 return;
             }
-            tbody.innerHTML = data.map(item => `
-                <tr class="hover:bg-slate-50/60 transition-colors">
-                    <td class="px-5 py-4 text-[11px] text-slate-500 font-bold whitespace-nowrap">${formatFecha(item.fecha)}</td>
-                    <td class="px-5 py-4 font-black text-slate-900 whitespace-nowrap">${item.remito || '—'}</td>
-                    <td class="px-5 py-4 text-slate-600 font-bold italic whitespace-nowrap">${item.tipo || '—'}</td>
-                    <td class="px-5 py-4 text-slate-600 text-[12px] whitespace-nowrap">${item.descripcion || '—'}</td>
-                    <td class="px-5 py-4 whitespace-nowrap">${badgePrioridad(item.prioridad)}</td>
-                    <td class="px-5 py-4 text-slate-500 text-[11px] whitespace-nowrap">${item.resolucion || '<span class="text-slate-400 italic font-bold">Sin resolución</span>'}</td>
-                    <td class="px-5 py-4 whitespace-nowrap">${badgeEstado(item.estado)}</td>
-                </tr>`).join('');
+            tbody.innerHTML = data.map(item => {
+                const evidencia = (item.evidencia || item.Evidencia || '').toString().trim();
+                let evidenciaCell;
+                if (!evidencia) {
+                    evidenciaCell = '<span class="text-slate-300 text-[10px] font-bold italic">—</span>';
+                } else {
+                    const urls = evidencia.split(',').filter(function(u){ return u.trim(); });
+                    evidenciaCell = urls.map(function(url, idx) {
+                        const label = urls.length > 1 ? 'HDR ' + (idx+1) : 'Ver HDR';
+                        return '<button onclick="verEvidencia(\'' + url.trim().replace(/\'/g, "\\\'" ) + '\')" class="flex items-center gap-1 px-2 py-1 bg-violet-50 border border-violet-200 rounded-lg text-violet-600 text-[9px] font-black uppercase hover:bg-violet-100 transition-colors mb-0.5"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"9\" height=\"9\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48\"/></svg>' + label + '</button>';
+                    }).join('');
+                }
+                return '<tr class="hover:bg-slate-50/60 transition-colors">' +
+                    '<td class="px-5 py-4 text-[11px] text-slate-500 font-bold whitespace-nowrap">' + formatFecha(item.fecha) + '</td>' +
+                    '<td class="px-5 py-4 font-black text-slate-900 whitespace-nowrap">' + (item.remito || '—') + '</td>' +
+                    '<td class="px-5 py-4 text-slate-600 font-bold italic whitespace-nowrap">' + (item.tipo || '—') + '</td>' +
+                    '<td class="px-5 py-4 text-slate-600 text-[12px] whitespace-nowrap">' + (item.descripcion || '—') + '</td>' +
+                    '<td class="px-5 py-4 whitespace-nowrap">' + badgePrioridad(item.prioridad) + '</td>' +
+                    '<td class="px-5 py-4 text-slate-500 text-[11px] whitespace-nowrap">' + (item.resolucion || '<span class="text-slate-400 italic font-bold">Sin resolución</span>') + '</td>' +
+                    '<td class="px-5 py-4 whitespace-nowrap">' + evidenciaCell + '</td>' +
+                    '<td class="px-5 py-4 whitespace-nowrap">' + badgeEstado(item.estado) + '</td>' +
+                    '</tr>';
+            }).join('');
         }
 
         function filtrarTabla() {
@@ -1226,12 +1262,31 @@
 
         async function init() {
             try {
-                const res = await fetch(WEB_APP_URL);
-                datosFull = await res.json();
+                const frame = document.getElementById('contentFrame');
+                frame.innerHTML = '<div class="flex items-center justify-center h-full"><div class="text-center"><div class="w-10 h-10 border-4 border-ocasa-cyan border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="text-slate-400 text-sm font-bold">Cargando datos...</p></div></div>';
+
+                const res = await fetch(WEB_APP_URL, {
+                    method: 'GET',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const text = await res.text();
+                try {
+                    datosFull = JSON.parse(text);
+                } catch(parseErr) {
+                    console.error('Error parseando JSON:', text.substring(0, 200));
+                    frame.innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-red-500 font-bold text-sm">Error cargando datos. Verificá la conexión con el Script.</p></div>';
+                    return;
+                }
+
                 showView('home');
                 lucide.createIcons();
                 setTimeout(procesarAlertas, 800);
-            } catch (e) { console.error("Error cargando datos:", e); }
+            } catch (e) {
+                console.error('Error cargando datos:', e);
+                document.getElementById('contentFrame').innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-red-500 font-bold text-sm">Sin conexión al servidor. Verificá el Apps Script.</p></div>';
+            }
         }
         init();
     </script>
