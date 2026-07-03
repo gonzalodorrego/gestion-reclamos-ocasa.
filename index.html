@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1174,37 +1173,8 @@
             return `<span class="px-2.5 py-1 bg-slate-50 text-slate-500 border-slate-200 rounded-full text-[9px] font-black uppercase border tracking-wider">${e || '—'}</span>`;
         }
 
-        function convertirUrlDrive(url) {
-            // Convierte link de Drive /view a link de imagen directa
-            var match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (match) {
-                return 'https://drive.google.com/uc?export=view&id=' + match[1];
-            }
-            return url;
-        }
-
         function verEvidencia(url) {
-            url = convertirUrlDrive(url);
-            const win = window.open('', '_blank');
-            win.document.write(`<!DOCTYPE html>
-<html><head><title>Evidencia HDR</title>
-<style>
-  body { margin: 0; background: #1e293b; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; }
-  .toolbar { position: fixed; top: 0; left: 0; right: 0; background: #0f172a; padding: 12px 20px; display: flex; justify-between; align-items: center; z-index: 10; }
-  .toolbar span { color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
-  .btn { background: #0097A7; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; text-decoration: none; }
-  img { max-width: 90vw; max-height: 85vh; border-radius: 12px; box-shadow: 0 25px 60px rgba(0,0,0,0.5); margin-top: 60px; }
-  @media print { body { background: white; } .toolbar { display: none; } img { margin: 0; max-width: 100%; max-height: 100%; box-shadow: none; } }
-</style></head>
-<body>
-  <div class="toolbar">
-    <span>Evidencia HDR — OCASA</span>
-    <button class="btn" onclick="window.print()">Guardar como PDF</button>
-  </div>
-  <img src="${url}" onload="this.style.opacity=1" style="opacity:0;transition:opacity 0.3s" 
-       onerror="this.outerHTML='<div style=color:#ef4444;font-weight:bold;margin-top:60px>No se pudo cargar la imagen. Verificá el link en el Sheet.</div>'">
-</body></html>`);
-            win.document.close();
+            window.open(url, '_blank');
         }
 
         function renderizarTabla(data) {
