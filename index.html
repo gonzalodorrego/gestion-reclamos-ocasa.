@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1211,7 +1212,7 @@
                 if (!evidencia) {
                     evidenciaCell = '<span class="text-slate-300 text-[10px] font-bold italic">—</span>';
                 } else {
-                    const urls = evidencia.split(',').filter(function(u){ return u.trim(); });
+                    const urls = evidencia.split(/[,\n;]+/).map(function(u){ return u.trim(); }).filter(function(u){ return u.startsWith('http'); });
                     evidenciaCell = urls.map(function(url, idx) {
                         const label = urls.length > 1 ? 'HDR ' + (idx+1) : 'Ver HDR';
                         return '<button onclick="verEvidencia(\'' + url.trim().replace(/\'/g, "\\\'" ) + '\')" class="flex items-center gap-1 px-2 py-1 bg-violet-50 border border-violet-200 rounded-lg text-violet-600 text-[9px] font-black uppercase hover:bg-violet-100 transition-colors mb-0.5"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"9\" height=\"9\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48\"/></svg>' + label + '</button>';
