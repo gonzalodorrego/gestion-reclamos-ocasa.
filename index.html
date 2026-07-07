@@ -122,15 +122,16 @@
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
     <!-- Pantalla de Login -->
-    <div id="loginScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f2744 100%);flex-direction:column;align-items:center;justify-content:center;">
-        <div style="background:white;border-radius:24px;padding:48px 40px;width:360px;max-width:90vw;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,0.4);">
-            <img src="logo_ocasa.png" alt="OCASA" style="height:48px;object-fit:contain;margin:0 auto 8px;">
-            <p style="color:#64748b;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:32px;">Gestión de Reclamos</p>
-            <h2 style="color:#1e293b;font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:-0.5px;margin-bottom:8px;">Bienvenido</h2>
-            <p style="color:#94a3b8;font-size:13px;margin-bottom:32px;">Iniciá sesión con tu cuenta de OCASA</p>
-            <div id="googleLoginBtn" style="display:flex;justify-content:center;margin-bottom:16px;"></div>
-            <p id="loginError" style="display:none;color:#ef4444;font-size:12px;font-weight:700;margin-top:12px;"></p>
-            <p style="color:#cbd5e1;font-size:11px;margin-top:24px;">Solo cuentas @ocasa.com tienen acceso</p>
+    <div id="loginScreen" style="display:none;position:fixed;inset:0;z-index:9999;" class="flex flex-col items-center justify-center bg-slate-900">
+        <div class="bg-white rounded-[2rem] p-10 w-[360px] max-w-[90vw] text-center shadow-2xl">
+            <img src="logo_ocasa.png" alt="OCASA" class="h-12 object-contain mx-auto mb-1">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic mb-8">Gestión de Reclamos</p>
+            <div class="w-1 h-8 bg-ocasa-cyan rounded-full mx-auto mb-6"></div>
+            <h2 class="text-xl font-black text-slate-800 uppercase italic tracking-tight mb-2">Bienvenido</h2>
+            <p class="text-sm text-slate-400 font-bold mb-8">Iniciá sesión con tu cuenta de OCASA</p>
+            <div id="googleLoginBtn" class="flex justify-center mb-4"></div>
+            <p id="loginError" style="display:none" class="text-red-500 text-[11px] font-black uppercase mt-3"></p>
+            <p class="text-[10px] text-slate-300 font-bold mt-6 uppercase tracking-wider">Solo cuentas @ocasa.com</p>
         </div>
     </div>
 
