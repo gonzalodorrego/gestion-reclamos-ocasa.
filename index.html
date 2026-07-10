@@ -386,7 +386,7 @@
                 const grupo = d.filter(x => (x.prioridad||x.Prioridad||'') === prioridad);
                 const tot = grupo.length;
                 const aTiempo = grupo.filter(x => {
-                    const est = (x.estado||x.Estado||''); if (est === 'Finalizado' || est === 'HDR enviada al cliente') return true;
+                    const estX = (x.estado||x.Estado||''); if (estX === 'Finalizado' || estX === 'HDR enviada al cliente') return true;
                     const diff = (ahora - new Date(x.fecha)) / (1000*60*60);
                     return diff < maxHoras;
                 }).length;
@@ -434,7 +434,7 @@
                 const grupo = datos.filter(d => (d.prioridad || d.Prioridad || '') === prioridad);
                 const tot = grupo.length;
                 const aTiempo = grupo.filter(d => {
-                    const est2 = (d.estado || d.Estado || ''); if (est2 === 'Finalizado' || est2 === 'HDR enviada al cliente') return true;
+                    const estD = (d.estado || d.Estado || ''); if (estD === 'Finalizado' || estD === 'HDR enviada al cliente') return true;
                     const diff = (ahora - new Date(d.fecha)) / (1000 * 60 * 60);
                     return diff < maxHoras;
                 }).length;
