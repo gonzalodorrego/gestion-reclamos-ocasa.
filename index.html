@@ -146,20 +146,7 @@
             <span class="text-[10px] text-slate-400 font-black tracking-widest uppercase italic">Logística Global</span>
         </div>
         
-        <nav class="flex-1 p-4 space-y-2">
-            <button onclick="toggleMenu()" class="w-full flex items-center justify-between px-5 py-4 bg-ocasa-cyan text-white rounded-2xl font-bold shadow-lg shadow-cyan-500/20 active:scale-95 transition-all">
-                <div class="flex items-center gap-3">
-                    <i data-lucide="menu" class="w-5 h-5"></i>
-                    <span class="text-sm tracking-tight uppercase">Menú Principal</span>
-                </div>
-                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" id="menuChevron"></i>
-            </button>
-            
-            <div id="menuContent" class="mt-2 space-y-1 bg-slate-50 rounded-3xl p-2 border border-slate-100">
-                <button onclick="showView('carga'); toggleSidebar();" class="menu-link w-full"><i data-lucide="file-plus" class="w-4 h-4"></i> Cargar Reclamo</button>
-                <button onclick="showView('historico'); toggleSidebar();" class="menu-link w-full"><i data-lucide="history" class="w-4 h-4"></i> Histórico</button>
-                <button onclick="showView('stats'); toggleSidebar();" class="menu-link w-full"><i data-lucide="pie-chart" class="w-4 h-4"></i> Estadísticas</button>
-            </div>
+        <nav class="flex-1 p-4">
         </nav>
 
         <div class="px-4 pb-2 border-t border-slate-100 pt-4">
@@ -180,28 +167,48 @@
     </aside>
 
     <main class="flex-1 flex flex-col min-w-0 bg-white relative">
-        <header class="h-16 md:h-20 bg-white border-b border-slate-100 px-6 md:px-10 flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar()" class="md:hidden p-2 text-slate-600"><i data-lucide="menu"></i></button>
-                <span class="hidden md:block w-1.5 h-6 bg-ocasa-cyan rounded-full"></span>
-                <h2 id="viewTitle" class="text-sm md:text-lg font-black text-slate-800 uppercase italic tracking-tighter">Panel de Gestión</h2>
-                <span class="hidden md:inline-flex items-center px-2.5 py-1 bg-ocasa-cyan/10 text-ocasa-cyan text-[10px] font-black uppercase rounded-full border border-ocasa-cyan/20 tracking-wider" id="labelNaveActiva">PL3</span>
-            </div>
-            
-            <div class="relative">
-                <button onclick="toggleNotificaciones()" id="btnBell" class="p-2 rounded-full hover:bg-slate-100 transition-all relative">
-                    <div id="bellWrapper"><i data-lucide="bell" class="w-6 h-6 text-slate-400"></i></div>
-                    <span id="badgeNotif" class="hidden absolute top-0 right-0 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">0</span>
-                </button>
-
-                <div id="notifPanel">
-                    <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center rounded-t-[24px]">
-                        <span class="text-[10px] font-black uppercase text-slate-400 italic">Alertas SLA</span>
-                        <span id="notifCount" class="bg-red-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold">0</span>
+        <header class="bg-white border-b border-slate-100 px-4 md:px-8 shadow-sm">
+            <!-- Fila 1: título + notif -->
+            <div class="flex items-center justify-between h-14">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="md:hidden p-2 text-slate-600"><i data-lucide="menu"></i></button>
+                    <span class="hidden md:block w-1.5 h-5 bg-ocasa-cyan rounded-full"></span>
+                    <h2 id="viewTitle" class="text-sm md:text-base font-black text-slate-800 uppercase italic tracking-tighter">Panel de Gestión</h2>
+                    <span class="hidden md:inline-flex items-center px-2.5 py-1 bg-ocasa-cyan/10 text-ocasa-cyan text-[10px] font-black uppercase rounded-full border border-ocasa-cyan/20 tracking-wider" id="labelNaveActiva">PL3</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <!-- Botón refresh -->
+                    <button onclick="recargarDatos()" id="btnRefresh" title="Actualizar datos" class="p-2 rounded-full hover:bg-slate-100 transition-all relative group">
+                        <i data-lucide="refresh-cw" class="w-5 h-5 text-slate-400 group-hover:text-ocasa-cyan transition-colors" id="iconRefresh"></i>
+                    </button>
+                    <!-- Campana -->
+                    <div class="relative">
+                        <button onclick="toggleNotificaciones()" id="btnBell" class="p-2 rounded-full hover:bg-slate-100 transition-all relative">
+                            <div id="bellWrapper"><i data-lucide="bell" class="w-5 h-5 text-slate-400"></i></div>
+                            <span id="badgeNotif" class="hidden absolute top-0 right-0 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">0</span>
+                        </button>
+                        <div id="notifPanel">
+                            <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center rounded-t-[24px]">
+                                <span class="text-[10px] font-black uppercase text-slate-400 italic">Alertas SLA</span>
+                                <span id="notifCount" class="bg-red-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold">0</span>
+                            </div>
+                            <div id="notifList" class="overflow-y-auto max-h-[350px] p-2 space-y-2"></div>
+                        </div>
                     </div>
-                    <div id="notifList" class="overflow-y-auto max-h-[350px] p-2 space-y-2"></div>
                 </div>
             </div>
+            <!-- Fila 2: nav horizontal -->
+            <nav class="hidden md:flex items-center gap-1 pb-2">
+                <button onclick="showView('carga')" class="nav-pill flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider text-slate-500 hover:bg-slate-50 hover:text-ocasa-cyan transition-all">
+                    <i data-lucide="file-plus" class="w-3.5 h-3.5"></i> Cargar Reclamo
+                </button>
+                <button onclick="showView('historico')" class="nav-pill flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider text-slate-500 hover:bg-slate-50 hover:text-ocasa-cyan transition-all">
+                    <i data-lucide="history" class="w-3.5 h-3.5"></i> Histórico
+                </button>
+                <button onclick="showView('stats')" class="nav-pill flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider text-slate-500 hover:bg-slate-50 hover:text-ocasa-cyan transition-all">
+                    <i data-lucide="pie-chart" class="w-3.5 h-3.5"></i> Estadísticas
+                </button>
+            </nav>
         </header>
 
         <div id="contentFrame" class="flex-1 overflow-y-auto p-4 md:p-10"></div>
@@ -271,10 +278,42 @@
             document.getElementById('overlay').classList.toggle('show');
         }
 
-        function toggleMenu() {
-            document.getElementById('menuContent').classList.toggle('open');
-            document.getElementById('menuChevron').classList.toggle('rotate-180');
+        async function recargarDatos() {
+            const icon = document.getElementById('iconRefresh');
+            if (icon) icon.classList.add('animate-spin');
+            try {
+                const res = await fetch(WEB_APP_URL);
+                const text = await res.text();
+                datosFull = JSON.parse(text);
+                // Refrescar vista actual
+                if (currentView === 'stats') renderStats();
+                else if (currentView === 'historico') showView('historico');
+                else if (currentView === 'home') showView('home');
+                procesarAlertas();
+            } catch(e) {
+                console.error('Error recargando:', e);
+            } finally {
+                if (icon) icon.classList.remove('animate-spin');
+            }
         }
+
+        function updateNavActive() {
+            document.querySelectorAll('.nav-pill').forEach(btn => {
+                btn.classList.remove('bg-ocasa-cyan', 'text-white', '!text-white');
+                btn.classList.add('text-slate-500');
+            });
+            const map = { carga: 0, historico: 1, stats: 2 };
+            const idx = map[currentView];
+            if (idx !== undefined) {
+                const pills = document.querySelectorAll('.nav-pill');
+                if (pills[idx]) {
+                    pills[idx].classList.add('bg-ocasa-cyan', 'text-white');
+                    pills[idx].classList.remove('text-slate-500');
+                }
+            }
+        }
+
+        function toggleMenu() {}
 
         function toggleNotificaciones() {
             document.getElementById('notifPanel').classList.toggle('show');
@@ -1162,9 +1201,8 @@
             }
 
             lucide.createIcons();
+            updateNavActive();
         }
-
-        let activeFilter = null;
 
         function formatFecha(f) {
             if (!f) return '—';
