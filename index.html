@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -68,11 +69,7 @@
         }
         .hero-bg::before { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.75); }
         #overlay { display: none; }
-        .home-mode #sidebar { background: transparent !important; border-right-color: rgba(255,255,255,0.2) !important; }
-        .home-mode #sidebar * { color: white !important; }
-        .home-mode #sidebar select { background: rgba(255,255,255,0.2) !important; border-color: rgba(255,255,255,0.3) !important; color: white !important; }
-        .home-mode .bg-ocasa-cyan { background: rgba(255,255,255,0.2) !important; }
-        .home-mode { background-size: cover; background-position: center; }
+
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
         /* === STATS DASHBOARD === */
@@ -141,7 +138,7 @@
     </div>
 
     <!-- App principal -->
-    <div id="appShell" style="display:none;width:100%;height:100%;flex-direction:row;" class="flex hero-bg">
+    <div id="appShell" style="display:none;width:100%;height:100%;flex-direction:row;" class="flex">
 
     <div id="overlay" onclick="toggleSidebar()"></div>
 
@@ -149,11 +146,22 @@
         <div class="p-8 border-b border-slate-100 flex flex-col items-center">
             <img src="logo_ocasa.png" alt="OCASA" class="max-w-[140px] mb-2 cursor-pointer" onclick="showView('home')">
             <span class="text-[10px] text-slate-400 font-black tracking-widest uppercase italic">Logística Global</span>
-            <div class="mt-4 w-full">
-                <select id="selectNave" onchange="cambiarNave(this.value)" class="w-full p-2.5 rounded-2xl bg-slate-50 border border-slate-200 font-black text-slate-800 outline-none text-sm cursor-pointer focus:border-ocasa-cyan transition-all appearance-none text-center">
-                    <option value="PL2">PL2</option>
-                    <option value="PL3" selected>PL3</option>
-                </select>
+        </div>
+
+        <!-- Desplegable nave + acciones -->
+        <div class="px-4 pt-4">
+            <button onclick="toggleNavPanel()" class="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all group">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-ocasa-cyan"></span>
+                    <span class="text-xs font-black text-slate-700 uppercase tracking-wider" id="labelNavePanel">PL3</span>
+                </div>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform duration-300" id="navPanelChevron"></i>
+            </button>
+            <div id="navPanel" class="overflow-hidden transition-all duration-300" style="max-height:0;">
+                <div class="pt-2 pb-1 space-y-1">
+                    <button onclick="cambiarNave('PL2')" class="nave-btn w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase text-slate-600 hover:bg-ocasa-cyan/10 hover:text-ocasa-cyan transition-all">PL2</button>
+                    <button onclick="cambiarNave('PL3')" class="nave-btn w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase text-slate-600 hover:bg-ocasa-cyan/10 hover:text-ocasa-cyan transition-all">PL3</button>
+                </div>
             </div>
         </div>
         
@@ -262,9 +270,24 @@
             return base;
         }
 
+        function toggleNavPanel() {
+            const panel = document.getElementById('navPanel');
+            const chevron = document.getElementById('navPanelChevron');
+            const isOpen = panel.style.maxHeight !== '0px' && panel.style.maxHeight !== '';
+            panel.style.maxHeight = isOpen ? '0' : '200px';
+            if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+
         function cambiarNave(nave) {
             naveActual = nave;
             document.getElementById('labelNaveActiva').innerText = nave;
+            const labelPanel = document.getElementById('labelNavePanel');
+            if (labelPanel) labelPanel.innerText = nave;
+            // Cerrar el panel
+            const panel = document.getElementById('navPanel');
+            const chevron = document.getElementById('navPanelChevron');
+            if (panel) panel.style.maxHeight = '0';
+            if (chevron) chevron.style.transform = '';
             if (currentView === 'stats') renderStats();
             else if (currentView === 'historico') showView('historico');
             procesarAlertas();
@@ -908,8 +931,7 @@
             frame.className = "flex-1 overflow-y-auto p-4 md:p-10";
             
             if (view === 'home') {
-                document.getElementById('appShell').classList.add('home-mode');
-                frame.classList.add('flex', 'items-center', 'justify-center', 'relative');
+                frame.classList.add('hero-bg', 'flex', 'items-center', 'justify-center', 'relative');
                 title.innerText = "Inicio";
                 frame.innerHTML = `<div style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
                     <div class="text-center bg-white/80 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl border border-white w-full max-w-lg">
@@ -920,7 +942,6 @@
             } 
             
             else if (view === 'carga') {
-                document.getElementById('appShell').classList.remove('home-mode');
                 title.innerText = "Nueva Carga";
                 frame.innerHTML = `
                     <div class="max-w-2xl mx-auto space-y-4">
@@ -1139,7 +1160,6 @@
             }
 
             else if (view === 'historico') {
-                document.getElementById('appShell').classList.remove('home-mode');
                 title.innerText = filter ? `Filtrando: ${filter}` : "Historial General";
                 activeFilter = filter;
                 frame.innerHTML = `
@@ -1203,7 +1223,6 @@
             }
 
             else if (view === 'stats') {
-                document.getElementById('appShell').classList.remove('home-mode');
                 title.innerText = "Estadísticas";
                 frame.classList.remove('hero-bg');
                 renderStats();
