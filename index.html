@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -69,6 +68,11 @@
         }
         .hero-bg::before { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.75); }
         #overlay { display: none; }
+        .home-mode #sidebar { background: transparent !important; border-right-color: rgba(255,255,255,0.2) !important; }
+        .home-mode #sidebar * { color: white !important; }
+        .home-mode #sidebar select { background: rgba(255,255,255,0.2) !important; border-color: rgba(255,255,255,0.3) !important; color: white !important; }
+        .home-mode .bg-ocasa-cyan { background: rgba(255,255,255,0.2) !important; }
+        .home-mode { background-size: cover; background-position: center; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
         /* === STATS DASHBOARD === */
@@ -137,7 +141,7 @@
     </div>
 
     <!-- App principal -->
-    <div id="appShell" style="display:none;width:100%;height:100%;flex-direction:row;" class="flex">
+    <div id="appShell" style="display:none;width:100%;height:100%;flex-direction:row;" class="flex hero-bg">
 
     <div id="overlay" onclick="toggleSidebar()"></div>
 
@@ -145,18 +149,16 @@
         <div class="p-8 border-b border-slate-100 flex flex-col items-center">
             <img src="logo_ocasa.png" alt="OCASA" class="max-w-[140px] mb-2 cursor-pointer" onclick="showView('home')">
             <span class="text-[10px] text-slate-400 font-black tracking-widest uppercase italic">Logística Global</span>
+            <div class="mt-4 w-full">
+                <select id="selectNave" onchange="cambiarNave(this.value)" class="w-full p-2.5 rounded-2xl bg-slate-50 border border-slate-200 font-black text-slate-800 outline-none text-sm cursor-pointer focus:border-ocasa-cyan transition-all appearance-none text-center">
+                    <option value="PL2">PL2</option>
+                    <option value="PL3" selected>PL3</option>
+                </select>
+            </div>
         </div>
         
         <nav class="flex-1 p-4">
         </nav>
-
-        <div class="px-4 pb-2 border-t border-slate-100 pt-4">
-            <p class="text-[9px] font-black text-slate-400 uppercase italic tracking-widest ml-1 mb-1">Nave activa</p>
-            <select id="selectNave" onchange="cambiarNave(this.value)" class="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 font-black text-slate-800 outline-none text-sm cursor-pointer focus:border-ocasa-cyan transition-all appearance-none">
-                <option value="PL2">PL2</option>
-                <option value="PL3" selected>PL3</option>
-            </select>
-        </div>
 
         <div class="p-6 border-t border-slate-100 flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-ocasa-cyan border border-slate-200 text-xs">GD</div>
@@ -906,7 +908,8 @@
             frame.className = "flex-1 overflow-y-auto p-4 md:p-10";
             
             if (view === 'home') {
-                frame.classList.add('hero-bg', 'flex', 'items-center', 'justify-center', 'relative');
+                document.getElementById('appShell').classList.add('home-mode');
+                frame.classList.add('flex', 'items-center', 'justify-center', 'relative');
                 title.innerText = "Inicio";
                 frame.innerHTML = `<div style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
                     <div class="text-center bg-white/80 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl border border-white w-full max-w-lg">
@@ -917,6 +920,7 @@
             } 
             
             else if (view === 'carga') {
+                document.getElementById('appShell').classList.remove('home-mode');
                 title.innerText = "Nueva Carga";
                 frame.innerHTML = `
                     <div class="max-w-2xl mx-auto space-y-4">
@@ -1135,6 +1139,7 @@
             }
 
             else if (view === 'historico') {
+                document.getElementById('appShell').classList.remove('home-mode');
                 title.innerText = filter ? `Filtrando: ${filter}` : "Historial General";
                 activeFilter = filter;
                 frame.innerHTML = `
@@ -1198,6 +1203,7 @@
             }
 
             else if (view === 'stats') {
+                document.getElementById('appShell').classList.remove('home-mode');
                 title.innerText = "Estadísticas";
                 frame.classList.remove('hero-bg');
                 renderStats();
