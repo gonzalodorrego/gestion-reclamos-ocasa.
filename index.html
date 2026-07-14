@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -138,60 +137,58 @@
     </div>
 
     <!-- App principal -->
-    <div id="appShell" style="display:none;width:100%;height:100%;flex-direction:row;" class="flex">
+    <div id="appShell" style="display:none;width:100%;height:100%;flex-direction:column;" class="flex">
 
-    <div id="overlay" onclick="toggleSidebar()"></div>
+    <!-- Overlay para cerrar drawer -->
+    <div id="overlay" onclick="toggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150;"></div>
 
-    <aside id="sidebar" class="w-72 bg-white border-r border-slate-200 flex flex-col shrink-0">
+    <!-- Drawer lateral (antes sidebar) -->
+    <aside id="sidebar" style="position:fixed;top:0;left:0;height:100vh;width:300px;z-index:200;transform:translateX(-100%);transition:transform 0.3s ease;background:white;box-shadow:4px 0 24px rgba(0,0,0,0.15);" class="flex flex-col">
         <div class="p-8 border-b border-slate-100 flex flex-col items-center">
-            <img src="logo_ocasa.png" alt="OCASA" class="max-w-[140px] mb-2 cursor-pointer" onclick="showView('home')">
+            <img src="logo_ocasa.png" alt="OCASA" class="max-w-[140px] mb-2 cursor-pointer" onclick="showView('home');toggleSidebar()">
             <span class="text-[10px] text-slate-400 font-black tracking-widest uppercase italic">Logística Global</span>
         </div>
 
-        <!-- Desplegable nave + acciones -->
-        <div class="px-4 pt-4">
-            <button onclick="toggleNavPanel()" class="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all group">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-ocasa-cyan"></span>
-                    <span class="text-xs font-black text-slate-700 uppercase tracking-wider" id="labelNavePanel">PL3</span>
-                </div>
-                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform duration-300" id="navPanelChevron"></i>
-            </button>
-            <div id="navPanel" class="overflow-hidden transition-all duration-300" style="max-height:0;">
-                <div class="pt-2 pb-1 space-y-1">
-                    <button onclick="cambiarNave('PL2')" class="nave-btn w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase text-slate-600 hover:bg-ocasa-cyan/10 hover:text-ocasa-cyan transition-all">PL2</button>
-                    <button onclick="cambiarNave('PL3')" class="nave-btn w-full text-left px-4 py-2.5 rounded-xl text-xs font-black uppercase text-slate-600 hover:bg-ocasa-cyan/10 hover:text-ocasa-cyan transition-all">PL3</button>
-                </div>
+        <div class="p-6 space-y-3 flex-1">
+            <!-- Nave -->
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Nave activa</p>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="cambiarNave('PL2');toggleSidebar()" id="naveBtn_PL2" class="py-3 rounded-2xl text-sm font-black uppercase border-2 border-slate-200 text-slate-600 hover:border-ocasa-cyan hover:text-ocasa-cyan transition-all">PL2</button>
+                <button onclick="cambiarNave('PL3');toggleSidebar()" id="naveBtn_PL3" class="py-3 rounded-2xl text-sm font-black uppercase border-2 border-ocasa-cyan text-ocasa-cyan bg-ocasa-cyan/5 transition-all">PL3</button>
+            </div>
+
+            <!-- Divider -->
+            <div class="border-t border-slate-100 pt-3">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3">Acciones</p>
+                <button onclick="recargarDatos();toggleSidebar()" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-50 hover:bg-ocasa-cyan/10 hover:text-ocasa-cyan text-slate-600 font-black text-xs uppercase tracking-wider transition-all border border-slate-200">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Actualizar datos
+                </button>
             </div>
         </div>
-        
-        <nav class="flex-1 p-4">
-        </nav>
 
         <div class="p-6 border-t border-slate-100 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-ocasa-cyan border border-slate-200 text-xs">GD</div>
+            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-ocasa-cyan border border-slate-200 text-xs" id="userInitials">GD</div>
             <div class="flex flex-col">
-                <span class="text-xs font-bold leading-tight">Gonzalo Dorrego</span>
+                <span class="text-xs font-bold leading-tight" id="userName">Gonzalo Dorrego</span>
                 <span class="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Admin Sistema</span>
             </div>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0 bg-white relative">
-        <header class="bg-white border-b border-slate-100 px-4 md:px-8 shadow-sm">
-            <!-- Fila 1: título + notif -->
+    <!-- Main: ocupa todo el ancho -->
+    <main class="flex flex-col w-full h-full min-w-0 bg-white">
+        <header class="bg-white border-b border-slate-100 px-4 md:px-8 shadow-sm shrink-0">
+            <!-- Fila 1: logo + nav + botones -->
             <div class="flex items-center justify-between h-14">
                 <div class="flex items-center gap-3">
-                    <button onclick="toggleSidebar()" class="md:hidden p-2 text-slate-600"><i data-lucide="menu"></i></button>
-                    <span class="hidden md:block w-1.5 h-5 bg-ocasa-cyan rounded-full"></span>
-                    <h2 id="viewTitle" class="text-sm md:text-base font-black text-slate-800 uppercase italic tracking-tighter">Panel de Gestión</h2>
+                    <!-- Botón menú (hamburguesa) -->
+                    <button onclick="toggleSidebar()" class="p-2 rounded-xl hover:bg-slate-100 transition-all">
+                        <i data-lucide="menu" class="w-5 h-5 text-slate-600"></i>
+                    </button>
+                    <img src="logo_ocasa.png" alt="OCASA" class="h-8 object-contain cursor-pointer" onclick="showView('home')">
                     <span class="hidden md:inline-flex items-center px-2.5 py-1 bg-ocasa-cyan/10 text-ocasa-cyan text-[10px] font-black uppercase rounded-full border border-ocasa-cyan/20 tracking-wider" id="labelNaveActiva">PL3</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <!-- Botón refresh -->
-                    <button onclick="recargarDatos()" id="btnRefresh" title="Actualizar datos" class="p-2 rounded-full hover:bg-slate-100 transition-all relative group">
-                        <i data-lucide="refresh-cw" class="w-5 h-5 text-slate-400 group-hover:text-ocasa-cyan transition-colors" id="iconRefresh"></i>
-                    </button>
                     <!-- Campana -->
                     <div class="relative">
                         <button onclick="toggleNotificaciones()" id="btnBell" class="p-2 rounded-full hover:bg-slate-100 transition-all relative">
@@ -209,7 +206,7 @@
                 </div>
             </div>
             <!-- Fila 2: nav horizontal -->
-            <nav class="hidden md:flex items-center gap-1 pb-2">
+            <nav class="flex items-center gap-1 pb-2">
                 <button onclick="showView('carga')" class="nav-pill flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider text-slate-500 hover:bg-slate-50 hover:text-ocasa-cyan transition-all">
                     <i data-lucide="file-plus" class="w-3.5 h-3.5"></i> Cargar Reclamo
                 </button>
@@ -281,13 +278,16 @@
         function cambiarNave(nave) {
             naveActual = nave;
             document.getElementById('labelNaveActiva').innerText = nave;
-            const labelPanel = document.getElementById('labelNavePanel');
-            if (labelPanel) labelPanel.innerText = nave;
-            // Cerrar el panel
-            const panel = document.getElementById('navPanel');
-            const chevron = document.getElementById('navPanelChevron');
-            if (panel) panel.style.maxHeight = '0';
-            if (chevron) chevron.style.transform = '';
+            // Highlight botones de nave en el drawer
+            ['PL2','PL3'].forEach(n => {
+                const btn = document.getElementById('naveBtn_' + n);
+                if (!btn) return;
+                if (n === nave) {
+                    btn.className = 'py-3 rounded-2xl text-sm font-black uppercase border-2 border-ocasa-cyan text-ocasa-cyan bg-ocasa-cyan/5 transition-all';
+                } else {
+                    btn.className = 'py-3 rounded-2xl text-sm font-black uppercase border-2 border-slate-200 text-slate-600 hover:border-ocasa-cyan hover:text-ocasa-cyan transition-all';
+                }
+            });
             if (currentView === 'stats') renderStats();
             else if (currentView === 'historico') showView('historico');
             procesarAlertas();
@@ -299,9 +299,11 @@
         }
 
         function toggleSidebar() {
-            if (window.innerWidth >= 768) return;
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('show');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const isOpen = sidebar.style.transform === 'translateX(0px)' || sidebar.style.transform === 'translateX(0)';
+            sidebar.style.transform = isOpen ? 'translateX(-100%)' : 'translateX(0)';
+            overlay.style.display = isOpen ? 'none' : 'block';
         }
 
         async function recargarDatos() {
