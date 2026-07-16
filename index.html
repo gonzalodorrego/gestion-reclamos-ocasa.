@@ -146,7 +146,16 @@
             <span class="text-[10px] text-slate-400 font-black tracking-widest uppercase italic">Logística Global</span>
         </div>
         
-        <nav class="flex-1 p-4">
+        <nav class="flex-1 p-4 space-y-1 md:hidden">
+            <button onclick="showView('carga');toggleSidebar()" class="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-600 hover:bg-ocasa-cyan/10 hover:text-ocasa-cyan font-black text-sm uppercase tracking-wider transition-all">
+                <i data-lucide="file-plus" class="w-5 h-5"></i> Cargar Reclamo
+            </button>
+            <button onclick="showView('historico');toggleSidebar()" class="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-600 hover:bg-ocasa-cyan/10 hover:text-ocasa-cyan font-black text-sm uppercase tracking-wider transition-all">
+                <i data-lucide="history" class="w-5 h-5"></i> Histórico
+            </button>
+            <button onclick="showView('stats');toggleSidebar()" class="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-600 hover:bg-ocasa-cyan/10 hover:text-ocasa-cyan font-black text-sm uppercase tracking-wider transition-all">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i> Estadísticas
+            </button>
         </nav>
 
         <div class="px-4 pb-2 border-t border-slate-100 pt-4 space-y-3">
@@ -215,6 +224,22 @@
         </header>
 
         <div id="contentFrame" class="flex-1 overflow-y-auto p-4 md:p-10"></div>
+
+        <!-- Bottom nav - solo mobile -->
+        <nav class="md:hidden flex items-center justify-around bg-white border-t border-slate-100 shadow-lg shrink-0" style="padding-bottom: env(safe-area-inset-bottom);">
+            <button onclick="showView('carga')" id="mobileNav_carga" class="mobile-nav-btn flex flex-col items-center gap-1 py-3 px-6 text-slate-400 transition-all">
+                <i data-lucide="file-plus" class="w-5 h-5"></i>
+                <span class="text-[9px] font-black uppercase tracking-wider">Cargar</span>
+            </button>
+            <button onclick="showView('historico')" id="mobileNav_historico" class="mobile-nav-btn flex flex-col items-center gap-1 py-3 px-6 text-slate-400 transition-all">
+                <i data-lucide="history" class="w-5 h-5"></i>
+                <span class="text-[9px] font-black uppercase tracking-wider">Histórico</span>
+            </button>
+            <button onclick="showView('stats')" id="mobileNav_stats" class="mobile-nav-btn flex flex-col items-center gap-1 py-3 px-6 text-slate-400 transition-all">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                <span class="text-[9px] font-black uppercase tracking-wider">Estadísticas</span>
+            </button>
+        </nav>
     </main>
 
     <script>
@@ -310,11 +335,17 @@
         }
 
         function updateNavActive() {
+            // Desktop nav pills
             document.querySelectorAll('.nav-pill').forEach(btn => {
-                btn.classList.remove('bg-ocasa-cyan', 'text-white', '!text-white');
+                btn.classList.remove('bg-ocasa-cyan', 'text-white');
                 btn.classList.add('text-slate-500');
             });
+            // Mobile bottom nav
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+                btn.style.color = '#94a3b8';
+            });
             const map = { carga: 0, historico: 1, stats: 2 };
+            const mobileMap = { carga: 'mobileNav_carga', historico: 'mobileNav_historico', stats: 'mobileNav_stats' };
             const idx = map[currentView];
             if (idx !== undefined) {
                 const pills = document.querySelectorAll('.nav-pill');
@@ -322,6 +353,8 @@
                     pills[idx].classList.add('bg-ocasa-cyan', 'text-white');
                     pills[idx].classList.remove('text-slate-500');
                 }
+                const mobileBtn = document.getElementById(mobileMap[currentView]);
+                if (mobileBtn) mobileBtn.style.color = '#0097A7';
             }
         }
 
