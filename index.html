@@ -355,25 +355,23 @@
                 const max = slaMax[item.prioridad] || 72;
                 const color = colorPrioridad[item.prioridad] || '#ef4444';
 
-                // Alerta 1: +3hs sin primera respuesta (siempre, independiente del SLA)
-                if (diff >= 3) {
-                    reclamosAtrasados.push({
-                        ...item,
-                        tipoAlerta: 'sinRespuesta',
-                        label: '+3hs sin primera respuesta',
-                        horas: Math.round(diff),
-                        colorAlerta: '#64748b'
-                    });
-                }
-
-                // Alerta 2: SLA de resolución vencido por prioridad
                 if (diff >= max) {
+                    // Rojo: SLA vencido — reemplaza el amarillo
                     reclamosAtrasados.push({
                         ...item,
-                        tipoAlerta: 'slaVencido',
-                        label: `SLA vencido — ${item.prioridad || '?'} (+${max}hs máx resolución)`,
-                        horas: Math.round(diff),
-                        colorAlerta: color
+                        nivel: 'rojo',
+                        label: `SLA vencido — límite de ${max}hs superado`,
+                        color: color,
+                        horas: Math.round(diff)
+                    });
+                } else if (diff >= 3) {
+                    // Amarillo: sin primera respuesta
+                    reclamosAtrasados.push({
+                        ...item,
+                        nivel: 'amarillo',
+                        label: `+3hs sin primera respuesta`,
+                        color: '#f59e0b',
+                        horas: Math.round(diff)
                     });
                 }
             });
@@ -382,22 +380,26 @@
             const wrapper = document.getElementById('bellWrapper');
             const list = document.getElementById('notifList');
             const count = document.getElementById('notifCount');
-            
+
             if (reclamosAtrasados.length > 0) {
                 badge.innerText = reclamosAtrasados.length;
                 badge.classList.remove('hidden');
                 wrapper.classList.add('animate-bell');
                 count.innerText = reclamosAtrasados.length;
-                list.innerHTML = reclamosAtrasados.map(r => `
-                    <div class="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm" style="border-left: 4px solid ${r.colorAlerta}">
+                list.innerHTML = reclamosAtrasados.map(r => {
+                    const semaforo = r.nivel === 'rojo'
+                        ? `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 6px #ef4444;margin-right:6px;"></span>`
+                        : `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;box-shadow:0 0 6px #f59e0b;margin-right:6px;"></span>`;
+                    return `<div class="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm" style="border-left: 4px solid ${r.color}">
                         <p class="text-[11px] font-black text-slate-800 uppercase italic">${r.tipo || '—'}</p>
                         <p class="text-[10px] text-slate-400 font-bold mt-1">Guía: ${r.remito}</p>
-                        <p class="text-[9px] font-black uppercase italic mt-1" style="color:${r.colorAlerta}">${r.label}</p>
+                        <p class="text-[9px] font-black uppercase italic mt-2 flex items-center" style="color:${r.color}">${semaforo}${r.label}</p>
                         <div class="flex justify-between items-center mt-3">
                             <span class="text-[9px] text-slate-400 font-bold">${r.horas}hs transcurridas</span>
                             <button onclick="verReclamo('${r.remito}')" class="bg-slate-900 text-white text-[9px] px-3 py-1.5 rounded-lg font-black uppercase">Ver</button>
                         </div>
-                    </div>`).join('');
+                    </div>`;
+                }).join('');
             } else {
                 badge.classList.add('hidden');
                 wrapper.classList.remove('animate-bell');
@@ -1234,11 +1236,37 @@
             return `<span class="px-2.5 py-1 ${cls} rounded-full text-[9px] font-black uppercase border tracking-wider">${p}</span>`;
         }
 
-        function badgeEstado(e) {
-            if (e === 'Pendiente')           return `<span class="px-2.5 py-1 bg-orange-50 text-orange-600 border-orange-200 rounded-full text-[9px] font-black uppercase border tracking-wider">Pendiente</span>`;
-            if (e === 'HDR enviada al cliente') return `<span class="px-2.5 py-1 bg-violet-50 text-violet-600 border-violet-200 rounded-full text-[9px] font-black uppercase border tracking-wider">HDR enviada al cliente</span>`;
-            if (e === 'Finalizado')          return `<span class="px-2.5 py-1 bg-cyan-50 border-cyan-200 rounded-full text-[9px] font-black uppercase border tracking-wider" style="color:#0097A7">Finalizado</span>`;
-            return `<span class="px-2.5 py-1 bg-slate-50 text-slate-500 border-slate-200 rounded-full text-[9px] font-black uppercase border tracking-wider">${e || '—'}</span>`;
+        function selectEstado(item) {
+            const est = item.estado || item.Estado || '';
+            const remito = item.remito || item.Remito || '';
+            const opts = ['Pendiente', 'HDR enviada al cliente', 'Finalizado'];
+            const colors = { 'Pendiente': '#f97316', 'HDR enviada al cliente': '#7c3aed', 'Finalizado': '#0097A7' };
+            const color = colors[est] || '#94a3b8';
+            return `<select onchange="actualizarEstado('${remito}', this.value, this)" 
+                style="border:2px solid ${color};color:${color};background:white;border-radius:99px;padding:3px 8px;font-size:9px;font-weight:900;text-transform:uppercase;outline:none;cursor:pointer;appearance:none;text-align:center;">
+                ${opts.map(o => `<option value="${o}" ${o === est ? 'selected' : ''}>${o}</option>`).join('')}
+            </select>`;
+        }
+
+        async function actualizarEstado(remito, nuevoEstado, selectEl) {
+            const colores = { 'Pendiente': '#f97316', 'HDR enviada al cliente': '#7c3aed', 'Finalizado': '#0097A7' };
+            selectEl.style.borderColor = colores[nuevoEstado] || '#94a3b8';
+            selectEl.style.color = colores[nuevoEstado] || '#94a3b8';
+            selectEl.disabled = true;
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ action: 'actualizarEstado', remito, estado: nuevoEstado })
+                });
+                // Actualizar en memoria
+                const item = datosFull.find(d => (d.remito || d.Remito || '').toString() === remito.toString());
+                if (item) item.estado = nuevoEstado;
+            } catch(e) {
+                console.error('Error actualizando estado:', e);
+            } finally {
+                selectEl.disabled = false;
+            }
         }
 
         function verEvidencia(url) {
@@ -1274,7 +1302,7 @@
                     '<td class="px-5 py-4 whitespace-nowrap">' + badgePrioridad(item.prioridad) + '</td>' +
                     '<td class="px-5 py-4 text-slate-500 text-[11px] whitespace-nowrap">' + (item.resolucion || '<span class="text-slate-400 italic font-bold">Sin resolución</span>') + '</td>' +
                     '<td class="px-5 py-4 whitespace-nowrap">' + evidenciaCell + '</td>' +
-                    '<td class="px-5 py-4 whitespace-nowrap">' + badgeEstado(item.estado) + '</td>' +
+                    '<td class="px-5 py-4 whitespace-nowrap">' + selectEstado(item) + '</td>' +
                     '</tr>';
             }).join('');
         }
